@@ -3,298 +3,348 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Türk Damasi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baran Ağa'ya Karşı Maraba | Türk Damasi</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--bg:#101112;--panel:#1b1c1e;--gold:#c4a45a;--light:#e9dfc6;--dark:#353638}
+:root{--bg:#090909;--panel:#151515;--gold:#c5a56a;--text:#f4f0e7;--muted:#999}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:#f5f0e4;font-family:Arial,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:20px 12px}
-.app{width:min(100%,620px)}
-header{text-align:center;margin:8px 0 20px}
-h1{margin:0;color:var(--gold);letter-spacing:3px;font-size:clamp(25px,6vw,38px)}
-.sub{color:#aaa;margin-top:8px;font-size:13px}
-.panel{background:var(--panel);border:1px solid #333;border-radius:15px;padding:14px;margin-bottom:14px}
-.status{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-#turn{font-weight:bold;color:var(--gold);font-size:17px}
-#message{font-size:13px;color:#ccc;margin-top:9px;line-height:1.5}
-.board{display:grid;grid-template-columns:repeat(8,1fr);width:100%;aspect-ratio:1;border:4px solid var(--gold);border-radius:5px;overflow:hidden;box-shadow:0 10px 30px #0008;touch-action:manipulation}
-.cell{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;border:0;padding:0;cursor:pointer}
-.cell.light{background:var(--light)}
-.cell.dark{background:var(--dark)}
-.cell.selected{box-shadow:inset 0 0 0 4px #e8c56b}
-.cell.target:after{content:"";position:absolute;width:24%;height:24%;border-radius:50%;background:#d6b75f;opacity:.9}
-.piece{width:75%;height:75%;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;box-shadow:inset 0 -4px 0 #0005,0 2px 4px #0008;border:2px solid #ffffff55}
-.white{background:#f0e5c9}
-.black{background:#171717;border-color:#777}
-.piece.king:after{content:"♛";font-size:clamp(15px,4.5vw,28px);color:var(--gold);font-weight:bold}
-.white.king:after{color:#8a6921}
-.controls{display:flex;gap:9px;margin-top:14px}
-button.action{flex:1;border:1px solid #5d4b27;border-radius:10px;background:#29251c;color:#f5e9c9;padding:12px 8px;font-weight:bold;cursor:pointer}
-button.action:hover{background:#393020}
-.rules{font-size:13px;line-height:1.65;color:#ccc}
-.rules b{color:var(--gold)}
-@media(max-width:380px){body{padding:10px 7px}.panel{padding:10px}.piece{border-width:1px}}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+header{padding:20px;text-align:center;border-bottom:1px solid #29251e}
+h1{font-size:clamp(20px,4vw,32px);margin:0;color:var(--gold)}
+header p{color:var(--muted);margin:8px 0 0}
+main{max-width:1200px;margin:auto;padding:20px;display:grid;grid-template-columns:minmax(280px,1.2fr) minmax(260px,.8fr);gap:20px}
+.panel{background:var(--panel);border:1px solid #2a2a2a;border-radius:16px;padding:18px;min-width:0}
+h2{font-size:18px;margin:0 0 14px}
+input,button{font:inherit;border-radius:9px;padding:12px;border:1px solid #393939}
+input{background:#0c0c0c;color:white;width:100%;min-width:0}
+button{background:var(--gold);color:#111;font-weight:bold;cursor:pointer}
+button:hover{filter:brightness(1.1)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:8px;margin:9px 0}
+.row>*{min-width:0}
+.row input{flex:1}
+.status{font-size:14px;line-height:1.5;color:#ddd;background:#0c0c0c;padding:12px;border-radius:9px;margin:12px 0}
+#board{width:100%;max-width:560px;aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);border:3px solid var(--gold);border-radius:5px;overflow:hidden;margin:auto}
+.cell{border:0;border-radius:0;padding:0;display:flex;align-items:center;justify-content:center;aspect-ratio:1}
+.light{background:#d9c9a8}.dark{background:#59432d}
+.cell.selected{box-shadow:inset 0 0 0 4px #f3d16b}
+.cell.target{box-shadow:inset 0 0 0 4px #73cf91}
+.piece{width:72%;height:72%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(12px,3vw,25px);font-weight:bold;box-shadow:0 3px 5px #0008}
+.white{background:#f5eee0;color:#171717;border:3px solid #b7a98e}
+.black{background:#171717;color:var(--gold);border:3px solid #888}
+#chatMessages{height:300px;overflow-y:auto;background:#0c0c0c;border-radius:10px;padding:10px;margin-bottom:10px}
+.msg{padding:8px 0;border-bottom:1px solid #242424;overflow-wrap:anywhere;font-size:14px}
+.msg b{color:var(--gold)}
+.small{font-size:12px;color:var(--muted);line-height:1.5}
+#roomInfo{color:var(--gold);font-weight:bold;overflow-wrap:anywhere}
+.hidden{display:none!important}
+@media(max-width:760px){main{grid-template-columns:1fr;padding:12px}.panel{padding:13px}#chatMessages{height:200px}}
 </style>
 </head>
 <body>
-<main class="app">
 <header>
-<h1>TÜRK DAMASI</h1>
-<div class="sub">GELENEKSEL DAMA · İKİ KİŞİLİK</div>
+<h1>BARAN AĞA'YA KARŞI MARABA</h1>
+<p>Türk Damasi • Dostluk sahada belli olur.</p>
 </header>
 
+<main>
 <section class="panel">
+<h2>♟️ Oyun tahtası</h2>
+<div id="status" class="status">Önce adını yaz, sonra oda oluştur veya oda koduyla katıl.</div>
+<div id="board" aria-label="Dama tahtası"></div>
+<div class="row">
+<button id="newGame" style="flex:1">Yeni oda oluştur</button>
+</div>
+<div class="row">
+<input id="joinCode" placeholder="Arkadaşının oda kodu">
+<button id="joinGame">Odaya katıl</button>
+</div>
+<p class="small">Odayı oluşturan kişi beyaz, katılan kişi siyah taşlarla oynar.</p>
+</section>
+
+<aside class="panel">
+<h2>💬 Oyuncu ve sohbet</h2>
+<label class="small" for="playerName">Oyuncu adın</label>
+<div class="row">
+<input id="playerName" maxlength="24" placeholder="Örn. Maraba">
+</div>
 <div class="status">
-<div id="turn">Beyazın sırası</div>
-<div id="count">16 — 16 taş</div>
+Oda kodu: <span id="roomInfo">Henüz oda yok</span>
+<button id="copyCode" class="hidden" style="padding:5px 9px;margin-left:6px">Kopyala</button>
+<br><span id="seatInfo" class="small"></span>
 </div>
-<div id="message">Bir taş seçerek oyna. Türk damasında taşlar çapraz değil, düz hareket eder.</div>
-</section>
-
-<div id="board" class="board" aria-label="Türk daması tahtası"></div>
-
-<section class="panel">
-<div class="controls">
-<button class="action" id="restart">Yeni oyun</button>
-<button class="action" id="undo">Geri al</button>
+<div id="chatMessages" aria-live="polite">
+<p class="small">Sohbet, odaya katılınca açılır.</p>
 </div>
-</section>
-
-<section class="panel rules">
-<b>Kurallar</b><br>
-• Normal taşlar ileriye ve yana bir kare hareket eder; çapraz gidemez ve geri hareket etmez.<br>
-• Taş yemek zorunludur. Birden fazla seçenek varsa en çok taşı yiyen hamle seçilmelidir.<br>
-• Taş yedikten sonra aynı taşla başka yeme varsa devam edilir.<br>
-• Son sıraya ulaşan taş dama olur. Dama yatay ve dikey olarak boş kareler boyunca hareket eder.<br>
-• Rakibin geçerli hamlesi kalmadığında oyun biter.
-</section>
+<div class="row">
+<input id="chatInput" maxlength="500" placeholder="Mesajını yaz..." disabled>
+<button id="sendMessage" disabled>Gönder</button>
+</div>
+<p class="small">İpucu: Oda oluştur, kodu arkadaşına gönder; o da telefondan aynı siteyi açıp kodu girsin.</p>
+</aside>
 </main>
+
 <script>
-"use strict";
+(() => {
+  // Supabase proje bilgileri
+  const SUPABASE_URL = "https://rcuqmwgohpzcpwgmkbjj.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_H60Zlfe0MbXeQmxSfiAwgg_WpoMUkmY";
 
-const N=8;
-const boardEl=document.getElementById("board");
-const turnEl=document.getElementById("turn");
-const messageEl=document.getElementById("message");
-const countEl=document.getElementById("count");
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const $ = id => document.getElementById(id);
 
-let board,turn,selected,legalTargets,forcedPiece,gameOver,history,turnHadCapture;
+  let roomId = null;
+  let seat = null;
+  let room = null;
+  let busy = false;
+  let selected = null;
+  let legalTargets = [];
+  let lastMessageId = 0;
+  let poller = null;
 
-function freshBoard(){
-  const b=Array.from({length:N},()=>Array(N).fill(null));
-  for(let r=0;r<2;r++)for(let c=0;c<N;c++)b[r][c]={side:"B",king:false};
-  for(let r=6;r<8;r++)for(let c=0;c<N;c++)b[r][c]={side:"W",king:false};
-  return b;
-}
-function start(){
-  board=freshBoard();turn="W";selected=null;legalTargets=[];
-  forcedPiece=null;gameOver=false;history=[];turnHadCapture=false;
-  say("Bir taş seçerek oyna. Taş yeme imkânı varsa yemek zorunludur.");
-  render();
-}
-function inside(r,c){return r>=0&&r<N&&c>=0&&c<N}
-function enemy(a,b){return a&&b&&a.side!==b.side}
-function dirs(piece){
-  if(piece.king)return [[1,0],[-1,0],[0,1],[0,-1]];
-  return piece.side==="W"?[[-1,0],[0,1],[0,-1]]:[[1,0],[0,1],[0,-1]];
-}
-function captureMoves(b,r,c){
-  const p=b[r][c];if(!p)return [];
-  const result=[];
-  for(const [dr,dc] of dirs(p)){
-    let nr=r+dr,nc=c+dc;
-    if(!inside(nr,nc)||!enemy(p,b[nr][nc]))continue;
-    let lr=nr+dr,lc=nc+dc;
-    if(inside(lr,lc)&&!b[lr][lc]){
-      result.push({from:[r,c],to:[lr,lc],captures:[[nr,nc]]});
-    }
-  }
-  // Dama taşları rakibin üzerinden aynı doğrultuda atlayabilir.
-  if(p.king){
-    for(const [dr,dc] of dirs(p)){
-      let nr=r+dr,nc=c+dc;
-      while(inside(nr,nc)&&!b[nr][nc]){nr+=dr;nc+=dc}
-      if(!inside(nr,nc)||!enemy(p,b[nr][nc]))continue;
-      const cr=nr,cc=nc;nr+=dr;nc+=dc;
-      while(inside(nr,nc)&&!b[nr][nc]){
-        result.push({from:[r,c],to:[nr,nc],captures:[[cr,cc]]});
-        nr+=dr;nc+=dc;
+  const blankBoard = () => {
+    const b = Array.from({length:8}, () => Array(8).fill(null));
+    for (let r=1;r<=2;r++)
+      for (let c=0;c<8;c++) b[r][c] = {side:"B",king:false};
+    for (let r=5;r<=6;r++)
+      for (let c=0;c<8;c++) b[r][c] = {side:"W",king:false};
+    return b;
+  };
+
+  function say(text) { $("status").textContent = text; }
+  function name() { return $("playerName").value.trim().slice(0,24); }
+  function myTurn() { return room && room.current_turn === seat && room.status === "playing"; }
+  function inside(r,c) { return r>=0 && r<8 && c>=0 && c<8; }
+  function same(a,b) { return a.r===b.r && a.c===b.c; }
+
+  function movesFor(board,r,c) {
+    const p = board[r][c];
+    if (!p) return [];
+    const dirs = p.king
+      ? [[1,0],[-1,0],[0,1],[0,-1]]
+      : [[p.side==="W"?-1:1,0],[0,1],[0,-1]];
+    const moves = [];
+
+    for (const [dr,dc] of dirs) {
+      const nr=r+dr, nc=c+dc;
+      if (inside(nr,nc) && !board[nr][nc]) {
+        if (p.king) {
+          let rr=nr, cc=nc;
+          while (inside(rr,cc) && !board[rr][cc]) {
+            moves.push({r:rr,c:cc,capture:null});
+            rr+=dr; cc+=dc;
+          }
+        } else {
+          moves.push({r:nr,c:nc,capture:null});
+        }
+      }
+
+      const er=r+dr, ec=c+dc, tr=r+2*dr, tc=c+2*dc;
+      if (inside(er,ec) && inside(tr,tc) &&
+          board[er][ec] && board[er][ec].side!==p.side &&
+          !board[tr][tc]) {
+        moves.push({r:tr,c:tc,capture:{r:er,c:ec}});
       }
     }
+
+    return moves;
   }
-  return result;
-}
-function normalMoves(b,r,c){
-  const p=b[r][c];if(!p)return [];
-  const out=[];
-  if(p.king){
-    for(const [dr,dc] of dirs(p)){
-      let nr=r+dr,nc=c+dc;
-      while(inside(nr,nc)&&!b[nr][nc]){
-        out.push({from:[r,c],to:[nr,nc],captures:[]});
-        nr+=dr;nc+=dc;
+
+  function renderBoard() {
+    const el = $("board");
+    el.innerHTML = "";
+    const b = room && room.board ? room.board : blankBoard();
+
+    for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+      const cell = document.createElement("button");
+      cell.className = "cell " + ((r+c)%2 ? "dark":"light");
+      cell.setAttribute("aria-label", `${r+1}. sıra ${c+1}. sütun`);
+      if (selected && same(selected,{r,c})) cell.classList.add("selected");
+      if (legalTargets.some(m=>m.r===r&&m.c===c)) cell.classList.add("target");
+
+      const p = b[r][c];
+      if (p) {
+        const piece = document.createElement("span");
+        piece.className = "piece " + (p.side==="W"?"white":"black");
+        piece.textContent = p.king ? "♛" : "";
+        cell.appendChild(piece);
+      }
+      cell.addEventListener("click",()=>clickCell(r,c));
+      el.appendChild(cell);
+    }
+  }
+
+  async function clickCell(r,c) {
+    if (!room || !seat || !myTurn() || busy) return;
+    const b = room.board;
+    const p = b[r][c];
+
+    if (selected) {
+      const m = legalTargets.find(x=>x.r===r&&x.c===c);
+      if (m) {
+        busy = true;
+        try {
+          const next = b.map(row=>row.map(x=>x ? {...x}:null));
+          const piece = {...next[selected.r][selected.c]};
+          next[selected.r][selected.c] = null;
+          if (m.capture) next[m.capture.r][m.capture.c] = null;
+          if (piece.side==="W" && r===0) piece.king=true;
+          if (piece.side==="B" && r===7) piece.king=true;
+          next[r][c] = piece;
+
+          const whiteLeft = next.flat().filter(x=>x&&x.side==="W").length;
+          const blackLeft = next.flat().filter(x=>x&&x.side==="B").length;
+          const nextTurn = seat==="W" ? "B" : "W";
+          const status = (!whiteLeft || !blackLeft) ? "finished" : "playing";
+
+          const {error} = await db.from("game_rooms").update({
+            board:next, current_turn:nextTurn, status
+          }).eq("id",roomId);
+          if (error) throw error;
+          selected=null; legalTargets=[];
+          await refreshRoom();
+          if (status==="finished") say("Oyun bitti! Kazanan: "+(!whiteLeft?"Siyah":"Beyaz"));
+        } catch(e) {
+          say("Hamle kaydedilemedi: "+e.message);
+        } finally { busy=false; renderBoard(); }
+        return;
       }
     }
-  }else{
-    const dr=p.side==="W"?-1:1;
-    for(const dc of [-1,0,1]){
-      // Only forward and horizontal, never diagonal.
-      if(dc!==0&&dr!==0){
-        if(dc===1||dc===-1){} 
-      }
+
+    if (p && p.side===seat) {
+      selected={r,c};
+      legalTargets=movesFor(b,r,c);
+    } else {
+      selected=null; legalTargets=[];
     }
-    for(const [rr,cc] of [[r+dr,c],[r,c-1],[r,c+1]]){
-      if(inside(rr,cc)&&!b[rr][cc])out.push({from:[r,c],to:[rr,cc],captures:[]});
+    renderBoard();
+  }
+
+  function makeCode() {
+    return Math.random().toString(36).slice(2,8).toUpperCase();
+  }
+
+  async function createRoom() {
+    if (!name()) { say("Önce oyuncu adını yaz."); $("playerName").focus(); return; }
+    clearInterval(poller);
+    roomId=makeCode(); seat="W"; lastMessageId=0;
+    const {data,error}=await db.from("game_rooms").insert({
+      id:roomId, white_player:name(), black_player:null,
+      board:blankBoard(), current_turn:"W", status:"waiting"
+    }).select().single();
+
+    if (error) { roomId=null; seat=null; say("Oda açılamadı: "+error.message); return; }
+    room=data;
+    showRoom();
+    say("Oda oluşturuldu! Arkadaşına oda kodunu gönder. Katılınca oyun başlayacak.");
+    startPolling();
+  }
+
+  async function joinRoom() {
+    if (!name()) { say("Önce oyuncu adını yaz."); $("playerName").focus(); return; }
+    const code=$("joinCode").value.trim().toUpperCase();
+    if (!code) { say("Arkadaşının oda kodunu yaz."); return; }
+
+    clearInterval(poller);
+    const {data,error}=await db.from("game_rooms").select("*").eq("id",code).maybeSingle();
+    if (error) { say("Oda aranırken hata oldu: "+error.message); return; }
+    if (!data) { say("Bu kodla oda bulunamadı. Kodu kontrol et."); return; }
+    if (data.black_player && data.black_player!==name()) {
+      say("Bu odada iki oyuncu var. Başka oda kodu dene."); return;
     }
-  }
-  return out;
-}
-function allCaptures(side,b=board){
-  const out=[];
-  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
-    if(b[r][c]?.side===side)out.push(...captureMoves(b,r,c));
-  }
-  return out;
-}
-function allNormal(side,b=board){
-  const out=[];
-  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
-    if(b[r][c]?.side===side)out.push(...normalMoves(b,r,c));
-  }
-  return out;
-}
-function clone(b){return b.map(row=>row.map(p=>p?{...p}:null))}
-function sequencesFrom(b,r,c,seen=new Set()){
-  const p=b[r][c];if(!p)return [];
-  const caps=captureMoves(b,r,c);
-  if(!caps.length)return [{count:0,steps:[]}];
-  let sequences=[];
-  for(const m of caps){
-    const nb=clone(b);
-    const moving=nb[r][c];
-    nb[r][c]=null;
-    for(const [cr,cc] of m.captures)nb[cr][cc]=null;
-    nb[m.to[0]][m.to[1]]=moving;
-    const nr=m.to[0],nc=m.to[1];
-    const becameKing=!moving.king&&((moving.side==="W"&&nr===0)||(moving.side==="B"&&nr===7));
-    if(becameKing)moving.king=true;
-    const more=sequencesFrom(nb,nr,nc,new Set(seen));
-    if(more.length){
-      for(const tail of more){
-        sequences.push({count:m.captures.length+tail.count,steps:[m,...tail.steps]});
-      }
-    }else sequences.push({count:m.captures.length,steps:[m]});
-  }
-  const max=Math.max(...sequences.map(s=>s.count));
-  return sequences.filter(s=>s.count===max);
-}
-function bestCaptures(side){
-  const out=[];
-  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
-    if(board[r][c]?.side!==side)continue;
-    const seqs=sequencesFrom(board,r,c);
-    for(const s of seqs){
-      if(s.count>0)out.push(...s.steps.slice(0,1));
+    if (data.status==="finished") { say("Bu oyun bitmiş. Yeni oda oluşturun."); return; }
+
+    roomId=code;
+    seat=(data.white_player===name() && !data.black_player) ? "W" : "B";
+    if (seat==="W") {
+      say("Bu oda senin oluşturduğun oda gibi görünüyor.");
+    } else {
+      const {error:upError}=await db.from("game_rooms").update({
+        black_player:name(), status:"playing"
+      }).eq("id",code).is("black_player",null);
+      if (upError) { say("Odaya katılma hatası: "+upError.message); return; }
     }
+    lastMessageId=0;
+    await refreshRoom();
+    showRoom();
+    say("Odaya bağlandın. Sıra kimdeyse o oynayabilir.");
+    startPolling();
   }
-  const max=out.length?Math.max(...out.map(m=>maxCaptureCountFrom(m.from[0],m.from[1]))):0;
-  return out.filter(m=>maxCaptureCountFrom(m.from[0],m.from[1])===max);
-}
-function maxCaptureCountFrom(r,c){
-  const seqs=sequencesFrom(board,r,c);
-  return Math.max(0,...seqs.map(s=>s.count));
-}
-function getMovesFor(r,c){
-  if(forcedPiece && (forcedPiece[0]!==r||forcedPiece[1]!==c))return [];
-  const caps=allCaptures(turn);
-  if(caps.length){
-    const best=bestCaptures(turn);
-    return best.filter(m=>m.from[0]===r&&m.from[1]===c);
+
+  function showRoom() {
+    $("roomInfo").textContent=roomId || "Henüz oda yok";
+    $("copyCode").classList.toggle("hidden",!roomId);
+    $("seatInfo").textContent=seat ? "Sen: "+(seat==="W"?"Beyaz taşlar":"Siyah taşlar") : "";
+    $("chatInput").disabled=!roomId;
+    $("sendMessage").disabled=!roomId;
+    renderBoard();
   }
-  return normalMoves(board,r,c);
-}
-function snapshot(){
-  history.push({board:clone(board),turn,forcedPiece:forcedPiece?[...forcedPiece]:null,gameOver,turnHadCapture});
-}
-function play(move){
-  snapshot();
-  const [r,c]=move.from,[nr,nc]=move.to;
-  const p=board[r][c];
-  board[r][c]=null;
-  for(const [cr,cc] of move.captures)board[cr][cc]=null;
-  board[nr][nc]=p;
-  if(move.captures.length)turnHadCapture=true;
-  const promoted=!p.king&&((p.side==="W"&&nr===0)||(p.side==="B"&&nr===7));
-  if(promoted)p.king=true;
-  selected=null;legalTargets=[];
-  if(move.captures.length){
-    const more=captureMoves(board,nr,nc);
-    if(more.length){
-      forcedPiece=[nr,nc];
-      legalTargets=getMovesFor(nr,nc);
-      say("Seri yeme! Aynı taşla yemeye devam etmelisin.");
-      render();return;
+
+  async function refreshRoom() {
+    if (!roomId) return;
+    const {data,error}=await db.from("game_rooms").select("*").eq("id",roomId).maybeSingle();
+    if (error) { say("Bağlantı hatası: "+error.message); return; }
+    if (!data) { say("Oda bulunamadı."); return; }
+    room=data;
+    if (room.status==="waiting") say("Baran Ağa'nın katılması bekleniyor. Oda kodu: "+roomId);
+    else if (room.status==="playing") say(myTurn()?"Sıra sende! Hamleni yap.":"Rakibin hamlesi bekleniyor...");
+    renderBoard();
+    await refreshMessages();
+  }
+
+  async function refreshMessages() {
+    if (!roomId) return;
+    const {data,error}=await db.from("game_messages").select("*")
+      .eq("room_id",roomId).order("id",{ascending:true}).limit(100);
+    if (error) return;
+    const box=$("chatMessages");
+    if (!data.length) {
+      box.innerHTML='<p class="small">İlk mesajı sen yaz!</p>';
+      return;
     }
+    box.innerHTML="";
+    data.forEach(m=>{
+      const div=document.createElement("div");
+      div.className="msg";
+      const who=document.createElement("b");
+      who.textContent=m.player_name+": ";
+      const content=document.createElement("span");
+      content.textContent=m.message;
+      div.appendChild(who); div.appendChild(content); box.appendChild(div);
+    });
+    box.scrollTop=box.scrollHeight;
+    lastMessageId=data[data.length-1].id;
   }
-  forcedPiece=null;
-  turn=turn==="W"?"B":"W";
-  const captures=allCaptures(turn),normal=allNormal(turn);
-  if(!captures.length&&!normal.length){
-    gameOver=true;
-    say((turn==="W"?"Beyaz":"Siyah")+" oyuncunun geçerli hamlesi kalmadı. Oyun bitti!");
-  }else say(turn==="W"?"Beyazın sırası.":"Siyahın sırası.");
-  render();
-}
-function tap(r,c){
-  if(gameOver)return;
-  const p=board[r][c];
-  if(selected){
-    const move=legalTargets.find(m=>m.to[0]===r&&m.to[1]===c);
-    if(move){play(move);return}
+
+  async function sendMessage() {
+    const message=$("chatInput").value.trim();
+    if (!roomId || !message) return;
+    const {error}=await db.from("game_messages").insert({
+      room_id:roomId, player_name:name()||"Oyuncu", message
+    });
+    if (error) { say("Mesaj gönderilemedi: "+error.message); return; }
+    $("chatInput").value="";
+    await refreshMessages();
   }
-  if(p&&p.side===turn&&(!forcedPiece||(forcedPiece[0]===r&&forcedPiece[1]===c))){
-    selected=[r,c];legalTargets=getMovesFor(r,c);
-    if(!legalTargets.length)say("Bu taş için geçerli hamle yok.");
-    else say(legalTargets[0].captures.length?"Yenecek taşı seç.":"Gideceğin kareyi seç.");
-  }else if(selected){
-    say("Geçerli bir hedef kare seçmelisin.");
+
+  function startPolling() {
+    clearInterval(poller);
+    poller=setInterval(refreshRoom,1500);
   }
-  render();
-}
-function say(t){messageEl.textContent=t}
-function render(){
-  boardEl.innerHTML="";
-  const targets=new Set(legalTargets.map(m=>m.to.join(",")));
-  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
-    const cell=document.createElement("button");
-    cell.className="cell "+((r+c)%2?"dark":"light");
-    cell.setAttribute("aria-label",`Satır ${r+1}, sütun ${c+1}`);
-    if(selected&&selected[0]===r&&selected[1]===c)cell.classList.add("selected");
-    if(targets.has([r,c].join(",")))cell.classList.add("target");
-    const p=board[r][c];
-    if(p){
-      const piece=document.createElement("span");
-      piece.className="piece "+(p.side==="W"?"white":"black")+(p.king?" king":"");
-      cell.appendChild(piece);
-    }
-    cell.addEventListener("click",()=>tap(r,c));
-    boardEl.appendChild(cell);
-  }
-  const w=board.flat().filter(p=>p?.side==="W").length;
-  const b=board.flat().filter(p=>p?.side==="B").length;
-  turnEl.textContent=gameOver?"Oyun bitti":(turn==="W"?"Beyazın sırası":"Siyahın sırası");
-  countEl.textContent=`${w} — ${b} taş`;
-}
-document.getElementById("restart").addEventListener("click",start);
-document.getElementById("undo").addEventListener("click",()=>{
-  if(!history.length)return;
-  const s=history.pop();
-  board=s.board;turn=s.turn;forcedPiece=s.forcedPiece;
-  gameOver=s.gameOver;turnHadCapture=s.turnHadCapture;
-  selected=null;legalTargets=[];
-  say("Son hamle geri alındı.");render();
-});
-start();
+
+  $("newGame").addEventListener("click",createRoom);
+  $("joinGame").addEventListener("click",joinRoom);
+  $("sendMessage").addEventListener("click",sendMessage);
+  $("chatInput").addEventListener("keydown",e=>{if(e.key==="Enter")sendMessage();});
+  $("joinCode").addEventListener("keydown",e=>{if(e.key==="Enter")joinRoom();});
+  $("copyCode").addEventListener("click",async()=>{
+    try { await navigator.clipboard.writeText(roomId); say("Oda kodu kopyalandı: "+roomId); }
+    catch(e) { say("Oda kodun: "+roomId+" — kodu elle seçip kopyalayabilirsin."); }
+  });
+
+  renderBoard();
+})();
 </script>
 </body>
 </html>
