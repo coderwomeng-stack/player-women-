@@ -2,522 +2,1039 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Baran Ağa'ya Karşı Maraba</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-:root{--gold:#c5a45b;--bg:#090909;--panel:#151515;--muted:#999}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:#f5f0e6;font-family:Arial,sans-serif}
-header{padding:22px 14px;text-align:center;border-bottom:1px solid #352b19}
-h1{font-size:clamp(22px,4vw,34px);margin:0;color:var(--gold)}
-header p{color:#aaa;font-size:13px}
-main{width:min(1100px,100%);margin:auto;padding:16px}
-.panel{background:var(--panel);border:1px solid #302819;border-radius:14px;padding:16px;margin-bottom:15px}
-input,button{font:inherit;border-radius:9px;padding:12px;border:1px solid #49402d}
-input{background:#0c0c0c;color:white;width:100%;margin:5px 0 10px}
-button{cursor:pointer;background:var(--gold);color:#111;font-weight:bold}
-button.secondary{background:#222;color:#eee;border-color:#51442c}
-button:disabled{opacity:.5;cursor:not-allowed}
-.row{display:flex;gap:9px;flex-wrap:wrap}
-.row>*{flex:1;min-width:120px}
-.hidden{display:none!important}
-.note{font-size:13px;color:#aaa;line-height:1.5}
-#status{color:var(--gold);min-height:24px;margin:8px 0}
-.gamegrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(250px,.9fr);gap:15px}
-#board{width:min(100%,560px);aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);border:3px solid var(--gold);margin:auto}
-.cell{min-width:0;min-height:0;border:0;border-radius:0;padding:0;display:flex;align-items:center;justify-content:center;position:relative}
-.cell.light{background:#d5c7a6}
-.cell.dark{background:#62513a}
-.cell.selected{outline:4px solid #e9c66f;outline-offset:-4px}
-.piece{width:72%;height:72%;border-radius:50%;border:3px solid #8c8c8c;box-shadow:inset 0 -4px 0 #0005,0 2px 3px #0008}
-.piece.white{background:#f4eee0;border-color:#bcae91}
-.piece.black{background:#171717;border-color:#b69a56}
-.piece.king:after{content:"♛";display:block;color:var(--gold);font-size:clamp(14px,3vw,24px);text-align:center;line-height:1.7}
-#chat{height:220px;overflow-y:auto;background:#0b0b0b;border-radius:9px;padding:10px;font-size:14px}
-.msg{padding:7px 0;border-bottom:1px solid #242424;overflow-wrap:anywhere}
-.msg strong{color:var(--gold)}
-.small{font-size:12px;color:#aaa}
-@media(max-width:760px){.gamegrid{grid-template-columns:1fr}main{padding:10px}.panel{padding:12px}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dama Arenası</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #090909;
+      --panel: #141414;
+      --gold: #b89a54;
+      --gold-light: #e0c47c;
+      --text: #f3f0e8;
+      --muted: #aaa49a;
+      --danger: #d75d5d;
+      --light-square: #d5c6a5;
+      --dark-square: #665640;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at top, #252016 0, var(--bg) 55%);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+    }
+
+    button, input { font: inherit; }
+
+    button {
+      border: 1px solid var(--gold);
+      background: var(--gold);
+      color: #111;
+      border-radius: 9px;
+      padding: 11px 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .15s;
+    }
+
+    button:hover { background: var(--gold-light); }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      color: var(--text);
+      background: #0c0c0c;
+      border: 1px solid #49402d;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    input:focus { border-color: var(--gold); }
+
+    .hidden { display: none !important; }
+
+    header {
+      padding: 22px 16px;
+      text-align: center;
+      border-bottom: 1px solid #352d1d;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 44px);
+      letter-spacing: 2px;
+      color: var(--gold-light);
+    }
+
+    header p { color: var(--muted); margin: 8px 0 0; }
+
+    main {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+      padding: 22px 14px 40px;
+    }
+
+    .panel {
+      background: rgba(20, 20, 20, .96);
+      border: 1px solid #3b3221;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 12px 35px #0005;
+    }
+
+    h2 { margin-top: 0; color: var(--gold-light); }
+
+    .narrow { max-width: 430px; margin: 35px auto; }
+    .stack { display: grid; gap: 12px; }
+    .muted { color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .error { color: #ff8585; min-height: 20px; font-size: 14px; }
+    .success { color: #a6d6a2; }
+    .gold { color: var(--gold-light); }
+
+    .lobby-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 16px;
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .game-info {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .pill {
+      border: 1px solid #55462b;
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: var(--gold-light);
+      font-size: 14px;
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      width: 100%;
+      aspect-ratio: 1;
+      border: 3px solid var(--gold);
+      border-radius: 5px;
+      overflow: hidden;
+      background: var(--dark-square);
+    }
+
+    .square {
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      min-height: 0;
+      position: relative;
+    }
+
+    .square:hover { filter: brightness(1.12); }
+    .square.light { background: var(--light-square); }
+    .square.dark { background: var(--dark-square); }
+
+    .square.selected {
+      outline: 4px solid #f6db78;
+      outline-offset: -4px;
+      z-index: 1;
+    }
+
+    .square.legal::after {
+      content: "";
+      width: 25%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #e8d28a;
+      box-shadow: 0 0 0 3px #332a16aa;
+      position: absolute;
+    }
+
+    .piece {
+      width: 76%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      box-shadow: inset 0 3px 5px #ffffff38, inset 0 -5px 6px #0008, 0 2px 3px #0009;
+      border: 2px solid #171717;
+      font-size: clamp(10px, 2.8vw, 24px);
+      font-weight: 900;
+      pointer-events: none;
+    }
+
+    .piece.white {
+      background: linear-gradient(145deg, #fffdf3, #cfc6b1);
+      color: #222;
+    }
+
+    .piece.black {
+      background: linear-gradient(145deg, #454545, #090909);
+      border-color: #a18a55;
+      color: var(--gold-light);
+    }
+
+    .piece.king { border: 3px solid var(--gold-light); }
+
+    .side-stack { display: grid; gap: 16px; }
+
+    .chat-messages {
+      height: 230px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      padding: 10px;
+      background: #0b0b0b;
+      border: 1px solid #30291d;
+      border-radius: 9px;
+      margin-bottom: 10px;
+    }
+
+    .message {
+      background: #1c1a16;
+      border-radius: 8px;
+      padding: 8px 10px;
+      overflow-wrap: anywhere;
+    }
+
+    .message strong { color: var(--gold-light); }
+    .message small { color: var(--muted); margin-left: 5px; }
+
+    .chat-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    .room-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .secondary { background: transparent; color: var(--gold-light); }
+    .secondary:hover { color: #111; }
+    .danger-button { background: #3a1717; color: #ffdada; border-color: #8b3b3b; }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #777;
+      font-size: 12px;
+    }
+
+    @media (max-width: 760px) {
+      main { padding: 14px 10px 28px; }
+      .game-layout { grid-template-columns: 1fr; }
+      .panel { padding: 14px; }
+      .side-stack { grid-template-columns: 1fr; }
+      .piece { width: 80%; }
+    }
+  </style>
 </head>
 <body>
-<header>
-<h1>BARAN AĞA'YA KARŞI MARABA</h1>
-<p>İki oyuncu · Tek tahta · Son hamleye kadar mücadele</p>
-</header>
+  <header>
+    <h1>DAMA ARENASI</h1>
+    <p>Tahtaya çık, hamleni yap, mücadeleye başla.</p>
+  </header>
 
-<main>
-<section id="login" class="panel">
-<h2>Oyuna giriş</h2>
-<label for="password">Oyun şifresi</label>
-<input id="password" type="password" placeholder="Şifreyi gir" autocomplete="current-password">
-<label for="nickname">Oyuncu adın</label>
-<input id="nickname" maxlength="20" placeholder="Örn. Maraba veya Baran Ağa">
-<button id="loginBtn" style="width:100%">Giriş yap</button>
-<p class="note">İkinizin de aynı oyun şifresini ve farklı oyuncu adlarını kullanması gerekir.</p>
-</section>
+  <main>
+    <section id="loginScreen" class="panel narrow">
+      <h2>Oyuncu Girişi</h2>
+      <div class="stack">
+        <label for="playerName">Oyuncu adın</label>
+        <input id="playerName" maxlength="20" placeholder="Örn. Oyuncu" autocomplete="nickname">
+        <label for="password">Oyun şifresi</label>
+        <input id="password" type="password" placeholder="Şifre" autocomplete="current-password">
+        <button id="loginButton">Giriş Yap</button>
+        <div id="loginError" class="error"></div>
+        <p class="muted">Aynı şifreyle iki oyuncu da giriş yapabilir. Oyuncu adını her girişte belirleyebilirsin.</p>
+      </div>
+    </section>
 
-<section id="lobby" class="panel hidden">
-<h2>Oyun odası</h2>
-<div class="row">
-<button id="createBtn">Oda oluştur</button>
-</div>
-<label for="roomInput">Arkadaşının oda kodu</label>
-<input id="roomInput" maxlength="12" placeholder="Oda kodunu buraya yaz">
-<button id="joinBtn" class="secondary" style="width:100%">Odaya katıl</button>
-<p class="note">Odayı oluşturan kodu arkadaşına gönderir. Arkadaşın telefondan aynı siteyi açıp bu kodla katılır.</p>
-</section>
+    <section id="lobbyScreen" class="hidden">
+      <div class="panel">
+        <div class="game-info">
+          <div>
+            <h2 style="margin-bottom:5px">Oyun Lobisi</h2>
+            <span class="muted">Hoş geldin, <strong id="welcomeName" class="gold"></strong></span>
+          </div>
+          <button id="logoutButton" class="secondary">Çıkış</button>
+        </div>
+        <div class="lobby-grid">
+          <div class="panel">
+            <h2>Yeni Oda Kur</h2>
+            <p class="muted">Yeni bir oda oluştur ve kodunu rakibinle paylaş.</p>
+            <button id="createRoomButton">Oda Oluştur</button>
+          </div>
+          <div class="panel">
+            <h2>Odaya Katıl</h2>
+            <p class="muted">Rakibinin verdiği oda kodunu yaz.</p>
+            <div class="stack">
+              <input id="roomCodeInput" maxlength="8" placeholder="Oda kodu">
+              <button id="joinRoomButton">Odaya Katıl</button>
+            </div>
+          </div>
+        </div>
+        <div id="lobbyError" class="error" style="margin-top:12px"></div>
+      </div>
+    </section>
 
-<div id="status" role="status" aria-live="polite"></div>
+    <section id="gameScreen" class="hidden">
+      <div class="game-layout">
+        <div class="panel">
+          <div class="game-info">
+            <div>
+              <h2 style="margin:0 0 5px">Dama Tahtası</h2>
+              <span class="muted">Oda: <strong id="roomCodeLabel" class="gold"></strong></span>
+            </div>
+            <span class="pill" id="timerLabel">Süre: 30</span>
+          </div>
 
-<section id="game" class="hidden">
-<div class="panel">
-<div class="row">
-<div><span class="small">Oda kodu</span><h2 id="roomCode">—</h2></div>
-<div><span class="small">Sıra</span><h2 id="turnLabel">—</h2></div>
-<div><span class="small">Kalan süre</span><h2 id="timer">30</h2></div>
-</div>
-<div class="row">
-<button id="copyBtn">Oda kodunu kopyala</button>
-<button id="leaveBtn" class="secondary">Odadan çık</button>
-</div>
-<p class="note">Beyaz taşlar ilk oyuncuya, siyah taşlar ikinci oyuncuya aittir. Taşını seç, sonra gitmek istediğin kareye dokun.</p>
-</div>
+          <div class="game-info">
+            <span class="pill" id="turnLabel">Hamle bekleniyor</span>
+            <span class="pill" id="colorLabel">Rengin: —</span>
+          </div>
 
-<div class="gamegrid">
-<section class="panel">
-<div id="board" aria-label="Dama tahtası"></div>
-<p id="gameMessage" class="note">Oyuncular bekleniyor.</p>
-<button id="newGameBtn" class="secondary" style="width:100%">Yeni oyun başlat</button>
-</section>
+          <div id="board" aria-label="Dama tahtası"></div>
 
-<section>
-<div class="panel">
-<h3>Oyuncular</h3>
-<p id="whitePlayer">⚪ Beyaz: Bekleniyor</p>
-<p id="blackPlayer">⚫ Siyah: Bekleniyor</p>
-</div>
-<div class="panel">
-<h3>Canlı sohbet</h3>
-<div id="chat"></div>
-<form id="chatForm">
-<input id="chatInput" maxlength="500" placeholder="Mesajını yaz..." autocomplete="off">
-<button style="width:100%" type="submit">Mesaj gönder</button>
-</form>
-</div>
-</section>
-</div>
-</section>
-</main>
+          <p id="gameStatus" class="muted" aria-live="polite">Oda hazırlanıyor...</p>
+
+          <div class="room-actions">
+            <button id="copyRoomButton">Oda Kodunu Göster</button>
+            <button id="backLobbyButton" class="secondary">Lobiye Dön</button>
+          </div>
+        </div>
+
+        <div class="side-stack">
+          <div class="panel">
+            <h2>Oyuncular</h2>
+            <p>⚪ Beyaz: <strong id="whitePlayer">Bekleniyor</strong></p>
+            <p>⚫ Siyah: <strong id="blackPlayer">Bekleniyor</strong></p>
+            <p class="muted">Bütün kareler kullanılabilir. Taşlar yatay ve ileri yönde hareket eder; dama taşları yatay ve dikey uzun hareket yapar.</p>
+          </div>
+
+          <div class="panel">
+            <h2>Sohbet</h2>
+            <div id="chatMessages" class="chat-messages"></div>
+            <form id="chatForm" class="chat-form">
+              <input id="chatInput" maxlength="300" placeholder="Mesajını yaz..." autocomplete="off">
+              <button type="submit">Gönder</button>
+            </form>
+            <div id="chatError" class="error"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>Dama Arenası · İyi oyunlar!</footer>
 
 <script>
 (() => {
-"use strict";
+  "use strict";
 
-// Supabase proje bilgileri
-const SUPABASE_URL = "https://rcuqmwgohpzcpwgmkbjj.supabase.co";
-const SUPABASE_KEY = "sb_publishable_H60Zlfe0MbXeQmxSfiAwgg_WpoMUkmY";
-const PASSWORD_FUNCTION = SUPABASE_URL + "/functions/v1/hello-world";
+  const SUPABASE_URL = "https://rcuqmwgohpzcpwgmkbjj.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_H60Zlfe0MbXeQmxSfiAwgg_WpoMUkmY";
+  const PASSWORD_FUNCTION = SUPABASE_URL + "/functions/v1/hello-world";
 
-const $ = id => document.getElementById(id);
-const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let player = "";
-let roomId = "";
-let myColor = "";
-let room = null;
-let channel = null;
-let chatChannel = null;
-let selected = null;
-let clock = null;
-let lastRoomUpdate = 0;
-let busy = false;
+  const $ = id => document.getElementById(id);
+  const screens = ["loginScreen", "lobbyScreen", "gameScreen"];
+  const showScreen = id => screens.forEach(s => $(s).classList.toggle("hidden", s !== id));
 
-function status(message) { $("status").textContent = message; }
-function show(id, yes) { $(id).classList.toggle("hidden", !yes); }
-function otherColor(c) { return c === "white" ? "black" : "white"; }
-function colorName(c) { return c === "white" ? "Beyaz" : "Siyah"; }
-function emptyBoard() { return Array.from({length:8}, () => Array(8).fill(null)); }
+  let playerName = "";
+  let room = null;
+  let myColor = null;
+  let selected = null;
+  let legalMoves = [];
+  let channel = null;
+  let chatChannel = null;
+  let timerInterval = null;
+  let lastTimeoutKey = "";
+  let busy = false;
+  let lastChatId = 0;
+  let pendingMessages = new Set();
 
-function initialBoard() {
-  const b = emptyBoard();
-  for (let r=0; r<2; r++)
-    for (let c=0; c<8; c++) b[r][c] = {color:"black", king:false};
-  for (let r=6; r<8; r++)
-    for (let c=0; c<8; c++) b[r][c] = {color:"white", king:false};
-  return b;
-}
+  function showError(id, message) { $(id).textContent = message || ""; }
 
-function validBoard(b) {
-  return Array.isArray(b) && b.length === 8 &&
-    b.every(row => Array.isArray(row) && row.length === 8 &&
-      row.every(p => p === null ||
-        (p && ["white","black"].includes(p.color) &&
-         typeof p.king === "boolean")));
-}
+  function makeInitialBoard() {
+    const board = Array.from({ length: 8 }, () => Array(8).fill(null));
+    for (let r = 0; r < 2; r++)
+      for (let c = 0; c < 8; c++)
+        board[r][c] = { color: "black", king: false };
 
-function isMyTurn() {
-  return room && room.current_turn === myColor &&
-    room.status === "playing" && !!room.black_player;
-}
+    for (let r = 6; r < 8; r++)
+      for (let c = 0; c < 8; c++)
+        board[r][c] = { color: "white", king: false };
 
-function renderBoard() {
-  const b = room?.board;
-  if (!validBoard(b)) return;
-  const boardEl = $("board");
-  boardEl.replaceChildren();
+    return board;
+  }
 
-  for (let r=0; r<8; r++) {
-    for (let c=0; c<8; c++) {
-      const cell = document.createElement("button");
-      cell.className = "cell " + ((r+c)%2 ? "dark" : "light");
-      cell.setAttribute("aria-label", `Satır ${r+1}, sütun ${c+1}`);
-      if (selected && selected.r===r && selected.c===c) cell.classList.add("selected");
+  function opposite(color) { return color === "white" ? "black" : "white"; }
+  function inside(r, c) { return r >= 0 && r < 8 && c >= 0 && c < 8; }
+  function same(a, b) { return a.r === b.r && a.c === b.c; }
 
-      const piece = b[r][c];
-      if (piece) {
-        const disc = document.createElement("span");
-        disc.className = "piece " + piece.color + (piece.king ? " king" : "");
-        cell.appendChild(disc);
+  function normalizeRoom(data) {
+    if (!data) return null;
+    return {
+      ...data,
+      board: typeof data.board === "string" ? JSON.parse(data.board) : data.board
+    };
+  }
+
+  function pieceAt(r, c, board = room.board) {
+    return inside(r, c) ? board[r][c] : null;
+  }
+
+  // Generate all captures for a single piece.
+  function capturesFor(r, c, board = room.board) {
+    const piece = pieceAt(r, c, board);
+    if (!piece) return [];
+
+    const result = [];
+    const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+
+    if (!piece.king) {
+      for (const [dr, dc] of dirs) {
+        const mr = r + dr, mc = c + dc;
+        const tr = r + 2 * dr, tc = c + 2 * dc;
+        if (!inside(tr, tc) || !inside(mr, mc)) continue;
+        const victim = board[mr][mc];
+        if (victim && victim.color !== piece.color && !board[tr][tc]) {
+          result.push({
+            from: { r, c }, to: { r: tr, c: tc },
+            capture: { r: mr, c: mc }
+          });
+        }
       }
-      cell.addEventListener("click", () => clickCell(r,c));
-      boardEl.appendChild(cell);
-    }
-  }
-}
-
-function updateGameInfo() {
-  if (!room) return;
-  $("roomCode").textContent = room.id;
-  $("turnLabel").textContent = room.status === "finished"
-    ? "Oyun bitti" : room.current_turn ? colorName(room.current_turn) : "Bekleniyor";
-  $("whitePlayer").textContent = "⚪ Beyaz: " + (room.white_player || "Bekleniyor");
-  $("blackPlayer").textContent = "⚫ Siyah: " + (room.black_player || "Bekleniyor");
-  $("gameMessage").textContent = room.status === "finished"
-    ? "Oyun sona erdi. Yeni oyun başlatılabilir."
-    : !room.black_player
-      ? "Arkadaşının katılması bekleniyor. Oda kodunu gönder."
-      : isMyTurn() ? "Sıra sende!" : "Rakibin hamlesi bekleniyor.";
-  $("newGameBtn").disabled = !room.white_player || !room.black_player;
-  renderBoard();
-}
-
-async function login() {
-  const password = $("password").value;
-  player = $("nickname").value.trim();
-  if (!password || !player) return status("Şifreyi ve oyuncu adını gir.");
-  if (player.length > 20) return status("Oyuncu adı en fazla 20 karakter olabilir.");
-
-  $("loginBtn").disabled = true;
-  status("Şifre kontrol ediliyor...");
-
-  try {
-    const res = await fetch(PASSWORD_FUNCTION, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY
-      },
-      body: JSON.stringify({password})
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || data.success !== true) {
-      throw new Error(data.error || "Giriş başarısız.");
+      return result;
     }
 
-    show("login", false);
-    show("lobby", true);
-    status("Giriş başarılı. Oda oluşturabilir veya bir odaya katılabilirsin.");
-  } catch (e) {
-    status("Giriş yapılamadı: " + e.message);
-  } finally {
-    $("loginBtn").disabled = false;
-  }
-}
+    // Flying king: jump one opponent and land on any empty square after it.
+    for (const [dr, dc] of dirs) {
+      let nr = r + dr, nc = c + dc;
+      let victim = null;
 
-async function createRoom() {
-  const id = Math.random().toString(36).slice(2,8).toUpperCase();
-  const data = {
-    id,
-    created_at: new Date().toISOString(),
-    white_player: player,
-    black_player: null,
-    board: initialBoard(),
-    current_turn: "white",
-    status: "waiting",
-    turn_started_at: new Date().toISOString()
-  };
+      while (inside(nr, nc)) {
+        const occupant = board[nr][nc];
+        if (!victim) {
+          if (!occupant) {
+            nr += dr; nc += dc;
+            continue;
+          }
+          if (occupant.color === piece.color) break;
+          victim = { r: nr, c: nc };
+          nr += dr; nc += dc;
+          continue;
+        }
 
-  status("Oda oluşturuluyor...");
-  const {error} = await client.from("game_rooms").insert(data);
-  if (error) return status("Oda oluşturulamadı: " + error.message);
-  await enterRoom(id, "white");
-}
-
-async function joinRoom() {
-  const id = $("roomInput").value.trim().toUpperCase();
-  if (!id) return status("Önce oda kodunu yaz.");
-  if (!/^[A-Z0-9_-]{3,12}$/.test(id)) return status("Oda kodu geçersiz.");
-  status("Oda aranıyor...");
-
-  const {data, error} = await client.from("game_rooms")
-    .select("*").eq("id", id).maybeSingle();
-  if (error) return status("Oda alınamadı: " + error.message);
-  if (!data) return status("Bu kodla bir oda bulunamadı.");
-
-  if (data.white_player === player) return enterRoom(id, "white");
-  if (data.black_player === player) return enterRoom(id, "black");
-  if (data.black_player) return status("Bu oda dolu. Başka oda kodu iste.");
-  if (data.white_player === player) return status("Bu odanın sahibi sensin.");
-
-  const {data: updated, error: updateError} = await client
-    .from("game_rooms")
-    .update({
-      black_player: player,
-      status: "playing",
-      current_turn: "white",
-      turn_started_at: new Date().toISOString()
-    })
-    .eq("id", id)
-    .is("black_player", null)
-    .select("*")
-    .maybeSingle();
-
-  if (updateError) return status("Odaya katılınamadı: " + updateError.message);
-  if (!updated) return status("Oda az önce doldu. Başka oda seç.");
-  await enterRoom(id, "black");
-}
-
-async function enterRoom(id, color) {
-  roomId = id;
-  myColor = color;
-  selected = null;
-  show("lobby", false);
-  show("game", true);
-  $("roomCode").textContent = id;
-  status("Oda yükleniyor...");
-
-  const {data, error} = await client.from("game_rooms")
-    .select("*").eq("id", id).single();
-  if (error || !data) {
-    show("game", false); show("lobby", true);
-    return status("Oda yüklenemedi: " + (error?.message || "Bulunamadı"));
-  }
-  room = data;
-  updateGameInfo();
-  subscribeRoom();
-  await loadChat();
-  subscribeChat();
-  startClock();
-  status("Odaya girdin. Kodunu arkadaşına gönder.");
-}
-
-function subscribeRoom() {
-  if (channel) client.removeChannel(channel);
-  channel = client.channel("room-" + roomId + "-" + Math.random().toString(36).slice(2))
-    .on("postgres_changes", {
-      event: "*", schema: "public", table: "game_rooms", filter: "id=eq." + roomId
-    }, payload => {
-      if (payload.new && payload.new.id === roomId) {
-        room = payload.new;
-        lastRoomUpdate = Date.now();
-        selected = null;
-        updateGameInfo();
+        if (occupant) break;
+        result.push({
+          from: { r, c }, to: { r: nr, c: nc },
+          capture: victim
+        });
+        nr += dr; nc += dc;
       }
-    }).subscribe();
-}
+    }
 
-async function loadChat() {
-  const {data, error} = await client.from("game_messages")
-    .select("id,player_name,message,created_at")
-    .eq("room_id", roomId).order("created_at", {ascending:true}).limit(100);
-  if (error) return status("Sohbet yüklenemedi: " + error.message);
-  $("chat").replaceChildren();
-  (data || []).forEach(addMessage);
-}
-
-function subscribeChat() {
-  if (chatChannel) client.removeChannel(chatChannel);
-  chatChannel = client.channel("chat-" + roomId + "-" + Math.random().toString(36).slice(2))
-    .on("postgres_changes", {
-      event:"INSERT", schema:"public", table:"game_messages", filter:"room_id=eq." + roomId
-    }, payload => addMessage(payload.new))
-    .subscribe();
-}
-
-function addMessage(m) {
-  if (!m || !m.message) return;
-  const box = $("chat");
-  const div = document.createElement("div");
-  div.className = "msg";
-  const name = document.createElement("strong");
-  name.textContent = m.player_name + ": ";
-  const text = document.createElement("span");
-  text.textContent = m.message;
-  div.append(name, text);
-  box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
-}
-
-async function sendMessage(event) {
-  event.preventDefault();
-  const message = $("chatInput").value.trim();
-  if (!message || !roomId) return;
-  $("chatInput").value = "";
-  const {error} = await client.from("game_messages").insert({
-    room_id: roomId, player_name: player, message
-  });
-  if (error) status("Mesaj gönderilemedi: " + error.message);
-}
-
-function canMove(r,c) {
-  return r>=0 && r<8 && c>=0 && c<8;
-}
-
-function getMove(from, to, b) {
-  const p = b[from.r][from.c];
-  if (!p || b[to.r][to.c] || !canMove(to.r,to.c)) return null;
-  const dr = to.r-from.r, dc = to.c-from.c;
-  const forward = p.color === "white" ? -1 : 1;
-
-  // Temel hareket: bir kare yatay veya ileri.
-  if (Math.abs(dr)+Math.abs(dc)===1 &&
-      (p.king || dc===0 ? (p.king || dr===forward) : false)) {
-    return {capture:null};
+    return result;
   }
 
-  // Basit taş alma: rakibin üzerinden iki kare atlama.
-  if (Math.abs(dr)+Math.abs(dc)===2) {
-    const mr = from.r + dr/2, mc = from.c + dc/2;
-    const middle = b[mr][mc];
-    if (middle && middle.color!==p.color &&
-        (p.king || dc===0 && dr===2*forward || Math.abs(dc)===2 && dr===0)) {
-      return {capture:{r:mr,c:mc}};
+  function stepsFor(r, c, board = room.board) {
+    const piece = pieceAt(r, c, board);
+    if (!piece) return [];
+
+    const result = [];
+    const dirs = piece.king
+      ? [[-1,0],[1,0],[0,-1],[0,1]]
+      : [[1,0],[0,-1],[0,1]];
+
+    for (const [dr, dc] of dirs) {
+      let nr = r + dr, nc = c + dc;
+      while (inside(nr, nc) && !board[nr][nc]) {
+        result.push({ from: { r, c }, to: { r: nr, c: nc }, capture: null });
+        if (!piece.king) break;
+        nr += dr;
+        nc += dc;
+      }
+    }
+    return result;
+  }
+
+  function allCaptures(color, board = room.board) {
+    const result = [];
+    for (let r = 0; r < 8; r++)
+      for (let c = 0; c < 8; c++)
+        if (board[r][c]?.color === color)
+          result.push(...capturesFor(r, c, board));
+    return result;
+  }
+
+  function allLegalMoves(color, board = room.board) {
+    const captures = allCaptures(color, board);
+    if (captures.length) return captures;
+
+    const result = [];
+    for (let r = 0; r < 8; r++)
+      for (let c = 0; c < 8; c++)
+        if (board[r][c]?.color === color)
+          result.push(...stepsFor(r, c, board));
+    return result;
+  }
+
+  function isPromotion(piece, r) {
+    return !piece.king &&
+      ((piece.color === "white" && r === 0) ||
+       (piece.color === "black" && r === 7));
+  }
+
+  function countPieces(color, board = room.board) {
+    return board.flat().filter(p => p && p.color === color).length;
+  }
+
+  function renderBoard() {
+    const boardEl = $("board");
+    boardEl.innerHTML = "";
+    if (!room?.board) return;
+
+    const movesHere = selected
+      ? legalMoves.filter(m => same(m.from, selected))
+      : [];
+
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "square " + ((r + c) % 2 ? "dark" : "light");
+        cell.setAttribute("aria-label", `Satır ${r + 1}, sütun ${c + 1}`);
+
+        if (selected && selected.r === r && selected.c === c)
+          cell.classList.add("selected");
+
+        if (movesHere.some(m => m.to.r === r && m.to.c === c))
+          cell.classList.add("legal");
+
+        const piece = room.board[r][c];
+        if (piece) {
+          const disk = document.createElement("span");
+          disk.className = `piece ${piece.color}` + (piece.king ? " king" : "");
+          disk.textContent = piece.king ? "♛" : "";
+          cell.appendChild(disk);
+        }
+
+        cell.addEventListener("click", () => onCellClick(r, c));
+        boardEl.appendChild(cell);
+      }
     }
   }
-  return null;
-}
 
-async function clickCell(r,c) {
-  if (!room || !isMyTurn() || busy) return;
-  const p = room.board[r][c];
+  function renderRoomInfo() {
+    $("roomCodeLabel").textContent = room.id;
+    $("whitePlayer").textContent = room.white_player || "Bekleniyor";
+    $("blackPlayer").textContent = room.black_player || "Bekleniyor";
+    $("colorLabel").textContent = "Rengin: " + (myColor === "white" ? "Beyaz" : "Siyah");
+    $("turnLabel").textContent = room.status === "finished"
+      ? "Oyun bitti"
+      : room.current_turn === myColor ? "Sıra sende" : "Rakibin hamlesi";
 
-  if (!selected) {
-    if (p && p.color===myColor) {
-      selected={r,c}; renderBoard();
+    const finished = room.status === "finished";
+    const waiting = room.status === "waiting";
+    if (finished) {
+      $("gameStatus").textContent = room.winner
+        ? `Oyun bitti. Kazanan: ${room.winner}`
+        : "Oyun bitti.";
+    } else if (waiting) {
+      $("gameStatus").textContent = "Rakibin odaya katılması bekleniyor.";
+    } else {
+      $("gameStatus").textContent = room.current_turn === myColor
+        ? "Hamleni yap. Rakibin taşını alabiliyorsan taş almak zorunludur."
+        : "Rakibinin hamlesi bekleniyor.";
     }
-    return;
+    renderBoard();
   }
 
-  if (p && p.color===myColor) {
-    selected={r,c}; renderBoard(); return;
+  function stopSubscriptions() {
+    if (channel) db.removeChannel(channel);
+    if (chatChannel) db.removeChannel(chatChannel);
+    channel = null;
+    chatChannel = null;
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
   }
 
-  const move = getMove(selected,{r,c},room.board);
-  if (!move) {
-    selected=null; renderBoard();
-    status("Bu hamle geçerli görünmüyor.");
-    return;
-  }
+  async function login() {
+    showError("loginError", "");
+    const name = $("playerName").value.trim();
+    const password = $("password").value;
 
-  const b = room.board.map(row => row.map(cell => cell ? {...cell} : null));
-  const piece = {...b[selected.r][selected.c]};
-  b[selected.r][selected.c]=null;
-  b[r][c]=piece;
-  if (move.capture) b[move.capture.r][move.capture.c]=null;
+    if (!name) return showError("loginError", "Lütfen oyuncu adını yaz.");
+    if (!password) return showError("loginError", "Lütfen şifreyi yaz.");
 
-  // Son sıraya ulaşan taş dama olur.
-  if ((piece.color==="white" && r===0) || (piece.color==="black" && r===7)) {
-    piece.king=true;
-    b[r][c]=piece;
-  }
+    $("loginButton").disabled = true;
+    try {
+      const response = await fetch(PASSWORD_FUNCTION, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "apikey": SUPABASE_KEY },
+        body: JSON.stringify({ password })
+      });
 
-  const enemy = otherColor(myColor);
-  const enemyPieces = b.flat().filter(x => x && x.color===enemy).length;
-  const nextTurn = enemyPieces===0 ? myColor : enemy;
-  const statusValue = enemyPieces===0 ? "finished" : "playing";
-  selected=null;
-  busy=true;
-  status("Hamle gönderiliyor...");
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.success !== true)
+        throw new Error(result.error || "Şifre doğrulanamadı.");
 
-  const {data, error} = await client.from("game_rooms")
-    .update({
-      board:b,
-      current_turn:nextTurn,
-      status:statusValue,
-      turn_started_at:new Date().toISOString()
-    })
-    .eq("id",roomId)
-    .eq("current_turn",myColor)
-    .eq("status","playing")
-    .select("*")
-    .maybeSingle();
-
-  busy=false;
-  if (error) return status("Hamle kaydedilemedi: " + error.message);
-  if (!data) return status("Sıra değişmiş olabilir. Tahta güncelleniyor.");
-  room=data;
-  updateGameInfo();
-  status(statusValue==="finished" ? colorName(myColor)+" kazandı!" : "Hamle kaydedildi.");
-}
-
-function startClock() {
-  if (clock) clearInterval(clock);
-  clock = setInterval(() => {
-    if (!room || room.status!=="playing" || !room.black_player) {
-      $("timer").textContent="30"; return;
+      playerName = name.slice(0, 20);
+      $("welcomeName").textContent = playerName;
+      showScreen("lobbyScreen");
+    } catch (err) {
+      showError("loginError", "Giriş yapılamadı: " + err.message);
+    } finally {
+      $("loginButton").disabled = false;
     }
-    const start = new Date(room.turn_started_at || room.created_at).getTime();
-    const left = Math.max(0,30-Math.floor((Date.now()-start)/1000));
-    $("timer").textContent=String(left);
-    // Süre dolunca otomatik hamle yapılmaz; rakip oyunu bilerek kaybetmiş sayılmaz.
-  }, 250);
-}
-
-async function newGame() {
-  if (!room || !room.white_player || !room.black_player) return;
-  if (!confirm("Tahtayı sıfırlayıp yeni oyun başlatmak istiyor musun?")) return;
-  const {data,error} = await client.from("game_rooms")
-    .update({
-      board:initialBoard(),
-      current_turn:"white",
-      status:"playing",
-      turn_started_at:new Date().toISOString()
-    })
-    .eq("id",roomId)
-    .select("*").maybeSingle();
-  if (error) return status("Yeni oyun başlatılamadı: " + error.message);
-  if (!data) return status("Tahta sıfırlanamadı.");
-  room=data; selected=null; updateGameInfo(); status("Yeni oyun başladı.");
-}
-
-async function leaveRoom() {
-  if (channel) await client.removeChannel(channel);
-  if (chatChannel) await client.removeChannel(chatChannel);
-  channel=null; chatChannel=null; room=null; roomId=""; myColor=""; selected=null;
-  show("game",false); show("lobby",true);
-  status("Odadan çıktın.");
-}
-
-$("loginBtn").addEventListener("click", login);
-$("password").addEventListener("keydown", e => {if(e.key==="Enter") login();});
-$("createBtn").addEventListener("click", createRoom);
-$("joinBtn").addEventListener("click", joinRoom);
-$("chatForm").addEventListener("submit", sendMessage);
-$("newGameBtn").addEventListener("click", newGame);
-$("leaveBtn").addEventListener("click", leaveRoom);
-$("copyBtn").addEventListener("click", async () => {
-  try {
-    await navigator.clipboard.writeText(roomId);
-    status("Oda kodu kopyalandı: " + roomId);
-  } catch {
-    status("Oda kodun: " + roomId + " — kodu elle kopyala.");
   }
-});
 
+  function generateRoomCode() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let code = "";
+    for (let i = 0; i < 6; i++)
+      code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+  }
+
+  async function createRoom() {
+    showError("lobbyError", "");
+    $("createRoomButton").disabled = true;
+    try {
+      let created = null;
+
+      for (let tries = 0; tries < 5 && !created; tries++) {
+        const id = generateRoomCode();
+        const { data, error } = await db.from("game_rooms").insert({
+          id,
+          white_player: playerName,
+          black_player: null,
+          board: makeInitialBoard(),
+          current_turn: "white",
+          status: "waiting",
+          turn_started_at: new Date().toISOString()
+        }).select().single();
+
+        if (!error) created = data;
+        else if (error.code !== "23505") throw error;
+      }
+
+      if (!created) throw new Error("Oda kodu oluşturulamadı. Yeniden dene.");
+      await enterRoom(normalizeRoom(created), "white");
+    } catch (err) {
+      showError("lobbyError", "Oda oluşturulamadı: " + err.message);
+    } finally {
+      $("createRoomButton").disabled = false;
+    }
+  }
+
+  async function joinRoom() {
+    showError("lobbyError", "");
+    const id = $("roomCodeInput").value.trim().toUpperCase();
+    if (!id) return showError("lobbyError", "Oda kodunu yaz.");
+
+    $("joinRoomButton").disabled = true;
+    try {
+      const { data, error } = await db.from("game_rooms").select("*").eq("id", id).maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("Bu kodla oda bulunamadı.");
+
+      const found = normalizeRoom(data);
+      if (found.status === "finished") throw new Error("Bu oyun zaten bitmiş.");
+      if (found.white_player === playerName || found.black_player === playerName)
+        throw new Error("Bu oyuncu adı odada zaten kullanılıyor.");
+
+      if (found.black_player && found.black_player !== playerName)
+        throw new Error("Bu oda dolu.");
+
+      if (found.white_player === playerName && found.black_player)
+        throw new Error("Bu isimle iki koltukta birden oynayamazsın.");
+
+      if (!found.black_player) {
+        const { data: updated, error: updateError } = await db
+          .from("game_rooms")
+          .update({
+            black_player: playerName,
+            status: "playing",
+            turn_started_at: new Date().toISOString()
+          })
+          .eq("id", id)
+          .is("black_player", null)
+          .select()
+          .maybeSingle();
+
+        if (updateError) throw updateError;
+        if (!updated) throw new Error("Oda az önce doldu. Başka bir odaya katıl.");
+        await enterRoom(normalizeRoom(updated), "black");
+      } else {
+        await enterRoom(found, "black");
+      }
+    } catch (err) {
+      showError("lobbyError", "Katılınamadı: " + err.message);
+    } finally {
+      $("joinRoomButton").disabled = false;
+    }
+  }
+
+  async function enterRoom(foundRoom, color) {
+    stopSubscriptions();
+    room = foundRoom;
+    myColor = color;
+    selected = null;
+    legalMoves = [];
+    lastTimeoutKey = "";
+    lastChatId = 0;
+    $("chatMessages").innerHTML = "";
+    showScreen("gameScreen");
+    renderRoomInfo();
+    await loadMessages();
+    subscribeRoom();
+    subscribeChat();
+    startTimer();
+  }
+
+  function subscribeRoom() {
+    channel = db.channel("room-" + room.id + "-" + Math.random().toString(36).slice(2))
+      .on("postgres_changes", {
+        event: "*", schema: "public", table: "game_rooms", filter: "id=eq." + room.id
+      }, payload => {
+        if (!payload.new) return;
+        const incoming = normalizeRoom(payload.new);
+        if (!incoming) return;
+
+        const previousTurn = room?.current_turn;
+        room = incoming;
+
+        // Reset the selection if the server accepted a different move.
+        if (previousTurn !== room.current_turn) {
+          selected = null;
+          legalMoves = [];
+        }
+
+        renderRoomInfo();
+      })
+      .subscribe();
+  }
+
+  async function loadMessages() {
+    const { data, error } = await db.from("game_messages")
+      .select("*").eq("room_id", room.id).order("id", { ascending: true }).limit(100);
+    if (error) {
+      showError("chatError", "Sohbet yüklenemedi: " + error.message);
+      return;
+    }
+    (data || []).forEach(addMessage);
+  }
+
+  function subscribeChat() {
+    chatChannel = db.channel("chat-" + room.id + "-" + Math.random().toString(36).slice(2))
+      .on("postgres_changes", {
+        event: "INSERT", schema: "public", table: "game_messages",
+        filter: "room_id=eq." + room.id
+      }, payload => addMessage(payload.new))
+      .subscribe();
+  }
+
+  function addMessage(message) {
+    if (!message || pendingMessages.has(message.id)) return;
+    pendingMessages.add(message.id);
+    lastChatId = Math.max(lastChatId, Number(message.id) || 0);
+
+    const wrap = document.createElement("div");
+    wrap.className = "message";
+    const heading = document.createElement("strong");
+    heading.textContent = message.player_name || "Oyuncu";
+    const time = document.createElement("small");
+    time.textContent = message.created_at
+      ? new Date(message.created_at).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })
+      : "";
+    const body = document.createElement("div");
+    body.textContent = message.message || "";
+    wrap.append(heading, time, body);
+    $("chatMessages").appendChild(wrap);
+    $("chatMessages").scrollTop = $("chatMessages").scrollHeight;
+
+    // Bound client-side deduplication memory.
+    if (pendingMessages.size > 500) pendingMessages.clear();
+  }
+
+  async function sendMessage(event) {
+    event.preventDefault();
+    showError("chatError", "");
+    const message = $("chatInput").value.trim();
+    if (!message || !room) return;
+
+    $("chatInput").disabled = true;
+    try {
+      const { error } = await db.from("game_messages").insert({
+        room_id: room.id,
+        player_name: playerName,
+        message: message.slice(0, 300)
+      });
+      if (error) throw error;
+      $("chatInput").value = "";
+    } catch (err) {
+      showError("chatError", "Mesaj gönderilemedi: " + err.message);
+    } finally {
+      $("chatInput").disabled = false;
+      $("chatInput").focus();
+    }
+  }
+
+  function onCellClick(r, c) {
+    if (!room || room.status !== "playing" || room.current_turn !== myColor || busy)
+      return;
+
+    const clickedPiece = room.board[r][c];
+
+    // Continue a multi-capture only with the piece that just captured.
+    if (selected && legalMoves.length && legalMoves[0].continuing) {
+      const move = legalMoves.find(m => m.to.r === r && m.to.c === c);
+      if (move) applyMove(move);
+      return;
+    }
+
+    if (selected) {
+      const move = legalMoves.find(m => same(m.from, selected) && m.to.r === r && m.to.c === c);
+      if (move) {
+        applyMove(move);
+        return;
+      }
+    }
+
+    if (clickedPiece && clickedPiece.color === myColor) {
+      const captures = allCaptures(myColor);
+      const moves = captures.length
+        ? captures.filter(m => m.from.r === r && m.from.c === c)
+        : stepsFor(r, c);
+
+      if (!moves.length) {
+        $("gameStatus").textContent = captures.length
+          ? "Taş almak zorunlu. Alabileceğin taşlardan birini seç."
+          : "Bu taşın geçerli hamlesi yok.";
+        return;
+      }
+
+      selected = { r, c };
+      legalMoves = moves;
+      renderBoard();
+      return;
+    }
+
+    selected = null;
+    legalMoves = [];
+    renderBoard();
+  }
+
+  async function applyMove(move) {
+    if (busy) return;
+    busy = true;
+
+    try {
+      const board = room.board.map(row => row.map(p => p ? { ...p } : null));
+      const piece = board[move.from.r][move.from.c];
+      if (!piece || piece.color !== myColor) return;
+
+      board[move.from.r][move.from.c] = null;
+      board[move.to.r][move.to.c] = piece;
+
+      if (move.capture) board[move.capture.r][move.capture.c] = null;
+
+      const promoted = isPromotion(piece, move.to.r);
+      if (promoted) piece.king = true;
+
+      // A man that reaches the promotion row ends its turn immediately.
+      const chain = move.capture && !promoted
+        ? capturesFor(move.to.r, move.to.c, board)
+        : [];
+
+      if (chain.length) {
+        room.board = board;
+        selected = { r: move.to.r, c: move.to.c };
+        legalMoves = chain.map(m => ({ ...m, continuing: true }));
+        renderBoard();
+        $("gameStatus").textContent = "Taş almaya devam et; aynı taşla başka bir alma hamlesi yapabilirsin.";
+        // Persist the partial position while keeping the same player's turn.
+        await saveRoom({
+          board,
+          current_turn: myColor,
+          turn_started_at: room.turn_started_at
+        }, false);
+        return;
+      }
+
+      const nextTurn = opposite(myColor);
+      const whiteCount = countPieces("white", board);
+      const blackCount = countPieces("black", board);
+      let status = "playing";
+      let winner = null;
+
+      if (!whiteCount || !blackCount) {
+        status = "finished";
+        winner = whiteCount ? room.white_player : room.black_player;
+      } else if (allLegalMoves(nextTurn, board).length === 0) {
+        status = "finished";
+        winner = nextTurn === "white" ? room.black_player : room.white_player;
+      }
+
+      const payload = {
+        board,
+        current_turn: nextTurn,
+        status,
+        winner,
+        turn_started_at: new Date().toISOString()
+      };
+
+      selected = null;
+      legalMoves = [];
+      await saveRoom(payload, true);
+
+      if (status === "finished") {
+        $("gameStatus").textContent = "Oyun bitti. Kazanan: " + winner;
+      }
+    } catch (err) {
+      $("gameStatus").textContent = "Hamle kaydedilemedi: " + err.message;
+    } finally {
+      busy = false;
+    }
+  }
+
+  async function saveRoom(payload, switchTurn) {
+    const { data, error } = await db.from("game_rooms")
+      .update(payload)
+      .eq("id", room.id)
+      .eq("current_turn", room.current_turn)
+      .select()
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) {
+      const { data: latest, error: latestError } = await db.from("game_rooms")
+        .select("*").eq("id", room.id).single();
+      if (latestError) throw latestError;
+      room = normalizeRoom(latest);
+      selected = null;
+      legalMoves = [];
+      renderRoomInfo();
+      throw new Error("Oda güncellendi. Tahtayı yenileyip tekrar dene.");
+    }
+
+    room = normalizeRoom(data);
+    if (switchTurn) lastTimeoutKey = "";
+    renderRoomInfo();
+  }
+
+  function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+
+    const tick = async () => {
+      if (!room || room.status !== "playing") {
+        $("timerLabel").textContent = "Süre: —";
+        return;
+      }
+
+      const started = room.turn_started_at ? new Date(room.turn_started_at).getTime() : Date.now();
+      const elapsed = Math.floor((Date.now() - started) / 1000);
+      const left = Math.max(0, 30 - elapsed);
+      $("timerLabel").textContent = "Süre: " + left;
+
+      // Only the player whose turn it is attempts to enforce the timeout.
+      // Database permissions must be configured carefully for competitive play.
+      if (left === 0 && room.current_turn === myColor && !busy) {
+        const key = room.id + ":" + room.current_turn + ":" + room.turn_started_at;
+        if (lastTimeoutKey !== key) {
+          lastTimeoutKey = key;
+          busy = true;
+          try {
+            const winner = room.current_turn === "white" ? room.black_player : room.white_player;
+            const { data, error } = await db.from("game_rooms")
+              .update({
+                status: "finished",
+                winner,
+                turn_started_at: new Date().toISOString()
+              })
+              .eq("id", room.id)
+              .eq("current_turn", room.current_turn)
+              .eq("turn_started_at", room.turn_started_at)
+              .select()
+              .maybeSingle();
+
+            if (error) throw error;
+            if (data) {
+              room = normalizeRoom(data);
+              renderRoomInfo();
+            }
+          } catch (err) {
+            $("gameStatus").textContent = "Süre güncellenemedi: " + err.message;
+          } finally {
+            busy = false;
+          }
+        }
+      }
+    };
+
+    tick();
+    timerInterval = setInterval(tick, 1000);
+  }
+
+  async function copyRoomCode() {
+    if (!room) return;
+    try {
+      await navigator.clipboard.writeText(room.id);
+      $("gameStatus").textContent = "Oda kodu kopyalandı: " + room.id;
+    } catch {
+      $("gameStatus").textContent = "Oda kodun: " + room.id + " (kodu seçip kopyalayabilirsin)";
+    }
+  }
+
+  function backToLobby() {
+    stopSubscriptions();
+    room = null;
+    myColor = null;
+    selected = null;
+    legalMoves = [];
+    busy = false;
+    showScreen("lobbyScreen");
+  }
+
+  function logout() {
+    stopSubscriptions();
+    room = null;
+    myColor = null;
+    playerName = "";
+    $("playerName").value = "";
+    $("password").value = "";
+    showScreen("loginScreen");
+  }
+
+  $("loginButton").addEventListener("click", login);
+  $("password").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
+  $("playerName").addEventListener("keydown", e => { if (e.key === "Enter") $("password").focus(); });
+  $("createRoomButton").addEventListener("click", createRoom);
+  $("joinRoomButton").addEventListener("click", joinRoom);
+  $("roomCodeInput").addEventListener("keydown", e => { if (e.key === "Enter") joinRoom(); });
+  $("chatForm").addEventListener("submit", sendMessage);
+  $("copyRoomButton").addEventListener("click", copyRoomCode);
+  $("backLobbyButton").addEventListener("click", backToLobby);
+  $("logoutButton").addEventListener("click", logout);
 })();
 </script>
 </body>
