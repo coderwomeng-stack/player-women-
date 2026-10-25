@@ -3,183 +3,298 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Maraba Dama</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Türk Damasi</title>
 <style>
+:root{--bg:#101112;--panel:#1b1c1e;--gold:#c4a45a;--light:#e9dfc6;--dark:#353638}
 *{box-sizing:border-box}
-body{margin:0;background:#101114;color:#f5f5f5;font-family:Arial,sans-serif;text-align:center;padding:18px}
-h1{color:#d8b66a;font-size:clamp(27px,6vw,40px)}
-p{color:#aaa}
-.card{max-width:600px;margin:18px auto;padding:16px;background:#1b1c21;border:1px solid #393a40;border-radius:14px}
-button{cursor:pointer;font-size:15px}
-.action{padding:12px 18px;border:0;border-radius:8px;background:#d8b66a;color:#151515;font-weight:bold;margin:4px}
-#board{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));width:min(94vw,560px);aspect-ratio:1;margin:20px auto;border:4px solid #d8b66a}
-.cell{position:relative;display:flex;align-items:center;justify-content:center;padding:0;border:0;border-radius:0;min-width:0;min-height:0}
-.light{background:#e8d9b9}
-.dark{background:#68503b}
-.selected{background:#d8b66a!important}
-.hint:after{content:"";width:24%;height:24%;border-radius:50%;background:#75d595;position:absolute}
-.piece{width:76%;height:76%;border-radius:50%;border:2px solid #ffffff66;box-shadow:inset 0 -4px 0 #0006,0 2px 5px #0008;pointer-events:none}
-.white{background:#f5f0e5}
-.black{background:#24252a}
-.king:after{content:"♛";display:grid;place-items:center;height:100%;color:#d8b66a;font-size:clamp(15px,4vw,25px)}
-#status{font-size:18px;font-weight:bold;color:#d8b66a}
-.small{font-size:13px;line-height:1.6}
+body{margin:0;background:var(--bg);color:#f5f0e4;font-family:Arial,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:20px 12px}
+.app{width:min(100%,620px)}
+header{text-align:center;margin:8px 0 20px}
+h1{margin:0;color:var(--gold);letter-spacing:3px;font-size:clamp(25px,6vw,38px)}
+.sub{color:#aaa;margin-top:8px;font-size:13px}
+.panel{background:var(--panel);border:1px solid #333;border-radius:15px;padding:14px;margin-bottom:14px}
+.status{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+#turn{font-weight:bold;color:var(--gold);font-size:17px}
+#message{font-size:13px;color:#ccc;margin-top:9px;line-height:1.5}
+.board{display:grid;grid-template-columns:repeat(8,1fr);width:100%;aspect-ratio:1;border:4px solid var(--gold);border-radius:5px;overflow:hidden;box-shadow:0 10px 30px #0008;touch-action:manipulation}
+.cell{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;border:0;padding:0;cursor:pointer}
+.cell.light{background:var(--light)}
+.cell.dark{background:var(--dark)}
+.cell.selected{box-shadow:inset 0 0 0 4px #e8c56b}
+.cell.target:after{content:"";position:absolute;width:24%;height:24%;border-radius:50%;background:#d6b75f;opacity:.9}
+.piece{width:75%;height:75%;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;box-shadow:inset 0 -4px 0 #0005,0 2px 4px #0008;border:2px solid #ffffff55}
+.white{background:#f0e5c9}
+.black{background:#171717;border-color:#777}
+.piece.king:after{content:"♛";font-size:clamp(15px,4.5vw,28px);color:var(--gold);font-weight:bold}
+.white.king:after{color:#8a6921}
+.controls{display:flex;gap:9px;margin-top:14px}
+button.action{flex:1;border:1px solid #5d4b27;border-radius:10px;background:#29251c;color:#f5e9c9;padding:12px 8px;font-weight:bold;cursor:pointer}
+button.action:hover{background:#393020}
+.rules{font-size:13px;line-height:1.65;color:#ccc}
+.rules b{color:var(--gold)}
+@media(max-width:380px){body{padding:10px 7px}.panel{padding:10px}.piece{border-width:1px}}
 </style>
 </head>
 <body>
-<h1>♛ MARABA DAMA</h1>
-<p>Türk Daması · İki kişilik oyun</p>
+<main class="app">
+<header>
+<h1>TÜRK DAMASI</h1>
+<div class="sub">GELENEKSEL DAMA · İKİ KİŞİLİK</div>
+</header>
 
-<div class="card">
-<p id="status">Beyazın sırası</p>
-<div id="board"></div>
-<button class="action" onclick="newGame()">Yeni Oyun</button>
-<p class="small">Beyaz ve siyah sırayla oynar. Taşını seç, sonra gideceği kareye bas.</p>
+<section class="panel">
+<div class="status">
+<div id="turn">Beyazın sırası</div>
+<div id="count">16 — 16 taş</div>
 </div>
+<div id="message">Bir taş seçerek oyna. Türk damasında taşlar çapraz değil, düz hareket eder.</div>
+</section>
 
+<div id="board" class="board" aria-label="Türk daması tahtası"></div>
+
+<section class="panel">
+<div class="controls">
+<button class="action" id="restart">Yeni oyun</button>
+<button class="action" id="undo">Geri al</button>
+</div>
+</section>
+
+<section class="panel rules">
+<b>Kurallar</b><br>
+• Normal taşlar ileriye ve yana bir kare hareket eder; çapraz gidemez ve geri hareket etmez.<br>
+• Taş yemek zorunludur. Birden fazla seçenek varsa en çok taşı yiyen hamle seçilmelidir.<br>
+• Taş yedikten sonra aynı taşla başka yeme varsa devam edilir.<br>
+• Son sıraya ulaşan taş dama olur. Dama yatay ve dikey olarak boş kareler boyunca hareket eder.<br>
+• Rakibin geçerli hamlesi kalmadığında oyun biter.
+</section>
+</main>
 <script>
-let board=[],turn=1,selected=null,targets=[],forced=null,winner=0;
-const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
-const el=id=>document.getElementById(id);
-const inside=(r,c)=>r>=0&&r<8&&c>=0&&c<8;
-const side=p=>p===1||p===3?1:p===2||p===4?2:0;
-const king=p=>p===3||p===4;
+"use strict";
 
-function newGame(){
- board=Array.from({length:8},()=>Array(8).fill(0));
- for(let r=0;r<2;r++)for(let c=0;c<8;c++)board[r][c]=2;
- for(let r=6;r<8;r++)for(let c=0;c<8;c++)board[r][c]=1;
- turn=1;selected=null;targets=[];forced=null;winner=0;
- draw();refresh();
+const N=8;
+const boardEl=document.getElementById("board");
+const turnEl=document.getElementById("turn");
+const messageEl=document.getElementById("message");
+const countEl=document.getElementById("count");
+
+let board,turn,selected,legalTargets,forcedPiece,gameOver,history,turnHadCapture;
+
+function freshBoard(){
+  const b=Array.from({length:N},()=>Array(N).fill(null));
+  for(let r=0;r<2;r++)for(let c=0;c<N;c++)b[r][c]={side:"B",king:false};
+  for(let r=6;r<8;r++)for(let c=0;c<N;c++)b[r][c]={side:"W",king:false};
+  return b;
 }
-
-function captures(r,c){
- let p=board[r][c],s=side(p),out=[];
- if(!p)return out;
- for(const [dr,dc] of dirs){
-  let nr=r+dr,nc=c+dc;
-  if(king(p)){
-   while(inside(nr,nc)&&board[nr][nc]===0){nr+=dr;nc+=dc}
-   if(!inside(nr,nc)||!board[nr][nc]||side(board[nr][nc])===s)continue;
-   let cr=nr,cc=nc;nr+=dr;nc+=dc;
-   while(inside(nr,nc)&&board[nr][nc]===0){
-    out.push({r:nr,c:nc,cap:{r:cr,c:cc}});
-    nr+=dr;nc+=dc;
-   }
-  }else if(inside(nr,nc)&&board[nr][nc]&&side(board[nr][nc])!==s){
-   let ar=nr+dr,ac=nc+dc;
-   if(inside(ar,ac)&&board[ar][ac]===0)out.push({r:ar,c:ac,cap:{r:nr,c:nc}});
+function start(){
+  board=freshBoard();turn="W";selected=null;legalTargets=[];
+  forcedPiece=null;gameOver=false;history=[];turnHadCapture=false;
+  say("Bir taş seçerek oyna. Taş yeme imkânı varsa yemek zorunludur.");
+  render();
+}
+function inside(r,c){return r>=0&&r<N&&c>=0&&c<N}
+function enemy(a,b){return a&&b&&a.side!==b.side}
+function dirs(piece){
+  if(piece.king)return [[1,0],[-1,0],[0,1],[0,-1]];
+  return piece.side==="W"?[[-1,0],[0,1],[0,-1]]:[[1,0],[0,1],[0,-1]];
+}
+function captureMoves(b,r,c){
+  const p=b[r][c];if(!p)return [];
+  const result=[];
+  for(const [dr,dc] of dirs(p)){
+    let nr=r+dr,nc=c+dc;
+    if(!inside(nr,nc)||!enemy(p,b[nr][nc]))continue;
+    let lr=nr+dr,lc=nc+dc;
+    if(inside(lr,lc)&&!b[lr][lc]){
+      result.push({from:[r,c],to:[lr,lc],captures:[[nr,nc]]});
+    }
   }
- }
- return out;
-}
-
-function moves(r,c){
- let p=board[r][c],s=side(p),out=[];
- if(!p)return out;
- for(const [dr,dc] of dirs){
-  let nr=r+dr,nc=c+dc;
-  if(king(p)){
-   while(inside(nr,nc)&&board[nr][nc]===0){
-    out.push({r:nr,c:nc});nr+=dr;nc+=dc;
-   }
-  }else if(inside(nr,nc)&&board[nr][nc]===0&&
-   ((s===1&&dr===-1)||(s===2&&dr===1)||(dr===0&&dc!==0))){
-   out.push({r:nr,c:nc});
+  // Dama taşları rakibin üzerinden aynı doğrultuda atlayabilir.
+  if(p.king){
+    for(const [dr,dc] of dirs(p)){
+      let nr=r+dr,nc=c+dc;
+      while(inside(nr,nc)&&!b[nr][nc]){nr+=dr;nc+=dc}
+      if(!inside(nr,nc)||!enemy(p,b[nr][nc]))continue;
+      const cr=nr,cc=nc;nr+=dr;nc+=dc;
+      while(inside(nr,nc)&&!b[nr][nc]){
+        result.push({from:[r,c],to:[nr,nc],captures:[[cr,cc]]});
+        nr+=dr;nc+=dc;
+      }
+    }
   }
- }
- return out;
+  return result;
 }
-
-function allCaptures(s){
- let out=[];
- for(let r=0;r<8;r++)for(let c=0;c<8;c++){
-  if(side(board[r][c])===s)
-   captures(r,c).forEach(m=>out.push({...m,from:{r,c}}));
- }
- return out;
+function normalMoves(b,r,c){
+  const p=b[r][c];if(!p)return [];
+  const out=[];
+  if(p.king){
+    for(const [dr,dc] of dirs(p)){
+      let nr=r+dr,nc=c+dc;
+      while(inside(nr,nc)&&!b[nr][nc]){
+        out.push({from:[r,c],to:[nr,nc],captures:[]});
+        nr+=dr;nc+=dc;
+      }
+    }
+  }else{
+    const dr=p.side==="W"?-1:1;
+    for(const dc of [-1,0,1]){
+      // Only forward and horizontal, never diagonal.
+      if(dc!==0&&dr!==0){
+        if(dc===1||dc===-1){} 
+      }
+    }
+    for(const [rr,cc] of [[r+dr,c],[r,c-1],[r,c+1]]){
+      if(inside(rr,cc)&&!b[rr][cc])out.push({from:[r,c],to:[rr,cc],captures:[]});
+    }
+  }
+  return out;
 }
-
-function allMoves(s){
- let caps=allCaptures(s);
- if(caps.length)return caps;
- let out=[];
- for(let r=0;r<8;r++)for(let c=0;c<8;c++){
-  if(side(board[r][c])===s)
-   moves(r,c).forEach(m=>out.push({...m,from:{r,c}}));
- }
- return out;
+function allCaptures(side,b=board){
+  const out=[];
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    if(b[r][c]?.side===side)out.push(...captureMoves(b,r,c));
+  }
+  return out;
 }
-
+function allNormal(side,b=board){
+  const out=[];
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    if(b[r][c]?.side===side)out.push(...normalMoves(b,r,c));
+  }
+  return out;
+}
+function clone(b){return b.map(row=>row.map(p=>p?{...p}:null))}
+function sequencesFrom(b,r,c,seen=new Set()){
+  const p=b[r][c];if(!p)return [];
+  const caps=captureMoves(b,r,c);
+  if(!caps.length)return [{count:0,steps:[]}];
+  let sequences=[];
+  for(const m of caps){
+    const nb=clone(b);
+    const moving=nb[r][c];
+    nb[r][c]=null;
+    for(const [cr,cc] of m.captures)nb[cr][cc]=null;
+    nb[m.to[0]][m.to[1]]=moving;
+    const nr=m.to[0],nc=m.to[1];
+    const becameKing=!moving.king&&((moving.side==="W"&&nr===0)||(moving.side==="B"&&nr===7));
+    if(becameKing)moving.king=true;
+    const more=sequencesFrom(nb,nr,nc,new Set(seen));
+    if(more.length){
+      for(const tail of more){
+        sequences.push({count:m.captures.length+tail.count,steps:[m,...tail.steps]});
+      }
+    }else sequences.push({count:m.captures.length,steps:[m]});
+  }
+  const max=Math.max(...sequences.map(s=>s.count));
+  return sequences.filter(s=>s.count===max);
+}
+function bestCaptures(side){
+  const out=[];
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    if(board[r][c]?.side!==side)continue;
+    const seqs=sequencesFrom(board,r,c);
+    for(const s of seqs){
+      if(s.count>0)out.push(...s.steps.slice(0,1));
+    }
+  }
+  const max=out.length?Math.max(...out.map(m=>maxCaptureCountFrom(m.from[0],m.from[1]))):0;
+  return out.filter(m=>maxCaptureCountFrom(m.from[0],m.from[1])===max);
+}
+function maxCaptureCountFrom(r,c){
+  const seqs=sequencesFrom(board,r,c);
+  return Math.max(0,...seqs.map(s=>s.count));
+}
+function getMovesFor(r,c){
+  if(forcedPiece && (forcedPiece[0]!==r||forcedPiece[1]!==c))return [];
+  const caps=allCaptures(turn);
+  if(caps.length){
+    const best=bestCaptures(turn);
+    return best.filter(m=>m.from[0]===r&&m.from[1]===c);
+  }
+  return normalMoves(board,r,c);
+}
+function snapshot(){
+  history.push({board:clone(board),turn,forcedPiece:forcedPiece?[...forcedPiece]:null,gameOver,turnHadCapture});
+}
+function play(move){
+  snapshot();
+  const [r,c]=move.from,[nr,nc]=move.to;
+  const p=board[r][c];
+  board[r][c]=null;
+  for(const [cr,cc] of move.captures)board[cr][cc]=null;
+  board[nr][nc]=p;
+  if(move.captures.length)turnHadCapture=true;
+  const promoted=!p.king&&((p.side==="W"&&nr===0)||(p.side==="B"&&nr===7));
+  if(promoted)p.king=true;
+  selected=null;legalTargets=[];
+  if(move.captures.length){
+    const more=captureMoves(board,nr,nc);
+    if(more.length){
+      forcedPiece=[nr,nc];
+      legalTargets=getMovesFor(nr,nc);
+      say("Seri yeme! Aynı taşla yemeye devam etmelisin.");
+      render();return;
+    }
+  }
+  forcedPiece=null;
+  turn=turn==="W"?"B":"W";
+  const captures=allCaptures(turn),normal=allNormal(turn);
+  if(!captures.length&&!normal.length){
+    gameOver=true;
+    say((turn==="W"?"Beyaz":"Siyah")+" oyuncunun geçerli hamlesi kalmadı. Oyun bitti!");
+  }else say(turn==="W"?"Beyazın sırası.":"Siyahın sırası.");
+  render();
+}
 function tap(r,c){
- if(winner)return;
- if(forced&& (r!==forced.r||c!==forced.c))return;
- if(selected){
-  const m=targets.find(x=>x.r===r&&x.c===c);
-  if(m){play(m);return}
- }
- if(side(board[r][c])===turn){
-  let caps=allCaptures(turn);
-  if(caps.length&&!caps.some(m=>m.from.r===r&&m.from.c===c)){
-   el("status").textContent="Taş alma zorunlu!";
-   return;
+  if(gameOver)return;
+  const p=board[r][c];
+  if(selected){
+    const move=legalTargets.find(m=>m.to[0]===r&&m.to[1]===c);
+    if(move){play(move);return}
   }
-  selected={r,c};
-  targets=caps.length?
-   caps.filter(m=>m.from.r===r&&m.from.c===c):
-   allMoves(turn).filter(m=>m.from.r===r&&m.from.c===c);
- }else{
-  selected=null;targets=[];
- }
- draw();refresh();
-}
-
-function play(m){
- let {r,c}=selected,p=board[r][c];
- board[r][c]=0;board[m.r][m.c]=p;
- if(m.cap)board[m.cap.r][m.cap.c]=0;
- if(p===1&&m.r===0)board[m.r][m.c]=3;
- if(p===2&&m.r===7)board[m.r][m.c]=4;
- selected=null;targets=[];
- if(m.cap){
-  let more=captures(m.r,m.c);
-  if(more.length){
-   forced={r:m.r,c:m.c};selected=forced;targets=more;
-   draw();el("status").textContent="Taş almaya devam et!";
-   return;
+  if(p&&p.side===turn&&(!forcedPiece||(forcedPiece[0]===r&&forcedPiece[1]===c))){
+    selected=[r,c];legalTargets=getMovesFor(r,c);
+    if(!legalTargets.length)say("Bu taş için geçerli hamle yok.");
+    else say(legalTargets[0].captures.length?"Yenecek taşı seç.":"Gideceğin kareyi seç.");
+  }else if(selected){
+    say("Geçerli bir hedef kare seçmelisin.");
   }
- }
- forced=null;
- let next=turn===1?2:1;
- if(allMoves(next).length===0)winner=turn;
- else turn=next;
- draw();refresh();
+  render();
 }
-
-function draw(){
- const root=el("board");root.innerHTML="";
- for(let r=0;r<8;r++)for(let c=0;c<8;c++){
-  let cell=document.createElement("button");
-  cell.className="cell "+((r+c)%2?"dark":"light");
-  if(selected&&selected.r===r&&selected.c===c)cell.classList.add("selected");
-  if(targets.some(m=>m.r===r&&m.c===c))cell.classList.add("hint");
-  if(board[r][c]){
-   let piece=document.createElement("span");
-   piece.className="piece "+(side(board[r][c])===1?"white":"black")+(king(board[r][c])?" king":"");
-   cell.appendChild(piece);
+function say(t){messageEl.textContent=t}
+function render(){
+  boardEl.innerHTML="";
+  const targets=new Set(legalTargets.map(m=>m.to.join(",")));
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    const cell=document.createElement("button");
+    cell.className="cell "+((r+c)%2?"dark":"light");
+    cell.setAttribute("aria-label",`Satır ${r+1}, sütun ${c+1}`);
+    if(selected&&selected[0]===r&&selected[1]===c)cell.classList.add("selected");
+    if(targets.has([r,c].join(",")))cell.classList.add("target");
+    const p=board[r][c];
+    if(p){
+      const piece=document.createElement("span");
+      piece.className="piece "+(p.side==="W"?"white":"black")+(p.king?" king":"");
+      cell.appendChild(piece);
+    }
+    cell.addEventListener("click",()=>tap(r,c));
+    boardEl.appendChild(cell);
   }
-  cell.onclick=()=>tap(r,c);
-  root.appendChild(cell);
- }
+  const w=board.flat().filter(p=>p?.side==="W").length;
+  const b=board.flat().filter(p=>p?.side==="B").length;
+  turnEl.textContent=gameOver?"Oyun bitti":(turn==="W"?"Beyazın sırası":"Siyahın sırası");
+  countEl.textContent=`${w} — ${b} taş`;
 }
-
-function refresh(){
- if(winner)el("status").textContent=(winner===1?"Beyaz":"Siyah")+" kazandı! 🎉";
- else el("status").textContent=turn===1?"Beyazın sırası":"Siyahın sırası";
-}
-
-newGame();
+document.getElementById("restart").addEventListener("click",start);
+document.getElementById("undo").addEventListener("click",()=>{
+  if(!history.length)return;
+  const s=history.pop();
+  board=s.board;turn=s.turn;forcedPiece=s.forcedPiece;
+  gameOver=s.gameOver;turnHadCapture=s.turnHadCapture;
+  selected=null;legalTargets=[];
+  say("Son hamle geri alındı.");render();
+});
+start();
 </script>
 </body>
 </html>
