@@ -1,350 +1,187 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title> Dama arenası | Türk Damasi</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dama Arenası</title>
 <style>
-:root{--bg:#090909;--panel:#151515;--gold:#c5a56a;--text:#f4f0e7;--muted:#999}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
-header{padding:20px;text-align:center;border-bottom:1px solid #29251e}
-h1{font-size:clamp(20px,4vw,32px);margin:0;color:var(--gold)}
-header p{color:var(--muted);margin:8px 0 0}
-main{max-width:1200px;margin:auto;padding:20px;display:grid;grid-template-columns:minmax(280px,1.2fr) minmax(260px,.8fr);gap:20px}
-.panel{background:var(--panel);border:1px solid #2a2a2a;border-radius:16px;padding:18px;min-width:0}
-h2{font-size:18px;margin:0 0 14px}
-input,button{font:inherit;border-radius:9px;padding:12px;border:1px solid #393939}
-input{background:#0c0c0c;color:white;width:100%;min-width:0}
-button{background:var(--gold);color:#111;font-weight:bold;cursor:pointer}
-button:hover{filter:brightness(1.1)}
-button:disabled{opacity:.45;cursor:not-allowed}
-.row{display:flex;gap:8px;margin:9px 0}
-.row>*{min-width:0}
-.row input{flex:1}
-.status{font-size:14px;line-height:1.5;color:#ddd;background:#0c0c0c;padding:12px;border-radius:9px;margin:12px 0}
-#board{width:100%;max-width:560px;aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);border:3px solid var(--gold);border-radius:5px;overflow:hidden;margin:auto}
-.cell{border:0;border-radius:0;padding:0;display:flex;align-items:center;justify-content:center;aspect-ratio:1}
-.light{background:#d9c9a8}.dark{background:#59432d}
-.cell.selected{box-shadow:inset 0 0 0 4px #f3d16b}
-.cell.target{box-shadow:inset 0 0 0 4px #73cf91}
-.piece{width:72%;height:72%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(12px,3vw,25px);font-weight:bold;box-shadow:0 3px 5px #0008}
-.white{background:#f5eee0;color:#171717;border:3px solid #b7a98e}
-.black{background:#171717;color:var(--gold);border:3px solid #888}
-#chatMessages{height:300px;overflow-y:auto;background:#0c0c0c;border-radius:10px;padding:10px;margin-bottom:10px}
-.msg{padding:8px 0;border-bottom:1px solid #242424;overflow-wrap:anywhere;font-size:14px}
-.msg b{color:var(--gold)}
-.small{font-size:12px;color:var(--muted);line-height:1.5}
-#roomInfo{color:var(--gold);font-weight:bold;overflow-wrap:anywhere}
-.hidden{display:none!important}
-@media(max-width:760px){main{grid-template-columns:1fr;padding:12px}.panel{padding:13px}#chatMessages{height:200px}}
+:root {
+  --bg: #090a0c;
+  --panel: #141619;
+  --gold: #bda36a;
+  --text: #f4f0e6;
+  --muted: #92949b;
+  --danger: #ff7070;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at top, #222016 0, var(--bg) 55%);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+}
+button, input {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  padding: 12px 16px;
+  background: var(--gold);
+  color: #17140d;
+  font-weight: bold;
+}
+input {
+  width: 100%;
+  padding: 13px;
+  color: white;
+  background: #0c0d0f;
+  border: 1px solid #414149;
+  border-radius: 10px;
+  outline: none;
+}
+input:focus { border-color: var(--gold); }
+.hidden { display: none !important; }
+.center-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.panel {
+  width: min(100%, 430px);
+  padding: 28px;
+  border: 1px solid #51462e;
+  border-radius: 20px;
+  background: rgba(20,22,25,.96);
+  box-shadow: 0 20px 70px #0009;
+}
+.logo {
+  color: var(--gold);
+  text-align: center;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+.subtitle {
+  color: var(--muted);
+  text-align: center;
+  margin: 12px 0 25px;
+}
+.stack { display: grid; gap: 12px; }
+.error { min-height: 20px; color: var(--danger); font-size: 14px; }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 5%;
+  border-bottom: 1px solid #302b20;
+}
+header .logo { font-size: 20px; }
+main {
+  width: min(100% - 28px, 900px);
+  margin: 28px auto;
+}
+.card {
+  background: var(--panel);
+  border: 1px solid #343238;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+h2 { margin-top: 0; }
+.muted { color: var(--muted); line-height: 1.6; }
+.note {
+  border-left: 3px solid var(--gold);
+  padding: 10px 12px;
+  background: #211e17;
+  color: #e8ddc4;
+  font-size: 14px;
+  line-height: 1.5;
+}
+@media (max-width: 480px) {
+  header { padding: 14px; }
+  .panel { padding: 22px; }
+}
 </style>
 </head>
 <body>
-<header>
-<h1>Dama arenası</h1>
-<p>Türk Damasi • Dostluk sahada belli olur.</p>
-</header>
 
-<main>
-<section class="panel">
-<h2>♟️ Oyun tahtası</h2>
-<div id="status" class="status">Önce adını yaz, sonra oda oluştur veya oda koduyla katıl.</div>
-<div id="board" aria-label="Dama tahtası"></div>
-<div class="row">
-<button id="newGame" style="flex:1">Yeni oda oluştur</button>
-</div>
-<div class="row">
-<input id="joinCode" placeholder="Arkadaşının oda kodu">
-<button id="joinGame">Odaya katıl</button>
-</div>
-<p class="small">Odayı oluşturan kişi beyaz, katılan kişi siyah taşlarla oynar.</p>
+<section id="loginScreen" class="center-screen">
+  <div class="panel">
+    <div class="logo">♟ DAMA ARENASI</div>
+    <p class="subtitle">Özel oyun alanına hoş geldin</p>
+    <form id="loginForm" class="stack">
+      <label for="password">Giriş şifresi</label>
+      <input id="password" type="password" inputmode="numeric"
+        autocomplete="current-password" placeholder="Şifreni gir" required>
+      <button type="submit">Giriş yap</button>
+      <div id="loginError" class="error" role="alert"></div>
+    </form>
+    <p class="muted" style="font-size:12px;text-align:center">
+      Bu örnek giriş ekranı tek başına güvenli erişim sağlamaz.
+    </p>
+  </div>
 </section>
 
-<aside class="panel">
-<h2>💬 Oyuncu ve sohbet</h2>
-<label class="small" for="playerName">Oyuncu adın</label>
-<div class="row">
-<input id="playerName" maxlength="24" placeholder="Örn. Maraba">
-</div>
-<div class="status">
-Oda kodu: <span id="roomInfo">Henüz oda yok</span>
-<button id="copyCode" class="hidden" style="padding:5px 9px;margin-left:6px">Kopyala</button>
-<br><span id="seatInfo" class="small"></span>
-</div>
-<div id="chatMessages" aria-live="polite">
-<p class="small">Sohbet, odaya katılınca açılır.</p>
-</div>
-<div class="row">
-<input id="chatInput" maxlength="500" placeholder="Mesajını yaz..." disabled>
-<button id="sendMessage" disabled>Gönder</button>
-</div>
-<p class="small">İpucu: Oda oluştur, kodu arkadaşına gönder; o da telefondan aynı siteyi açıp kodu girsin.</p>
-</aside>
-</main>
+<section id="appScreen" class="hidden">
+  <header>
+    <div class="logo">♟ DAMA ARENASI</div>
+    <button id="logoutButton" type="button">Çıkış</button>
+  </header>
+  <main>
+    <div class="card">
+      <h2>Hoş geldin!</h2>
+      <p class="muted">
+        Arayüz hazır. Çevrim içi oda kurma, hamle senkronizasyonu ve sohbet
+        için Supabase tarafında doğrulanmış kullanıcı erişimi ve sunucu
+        kuralları kurulmalıdır.
+      </p>
+      <div class="note">
+        Güvenlik: Aşağıdaki tarayıcı kontrolü yalnızca örnektir.
+        Şifreyi bilen veya sayfa kodunu inceleyen biri bu kontrolü aşabilir.
+        Gerçek güvenli giriş için sunucu tarafı doğrulama gereklidir.
+      </div>
+    </div>
+    <div class="card">
+      <h2>Oyun alanı</h2>
+      <p class="muted">
+        Bu arayüz henüz gerçek çevrim içi dama tahtası değildir.
+        Güvenli oda oluşturma ve katılma özellikleri sunucu doğrulaması
+        tamamlandıktan sonra eklenmelidir.
+      </p>
+    </div>
+  </main>
+</section>
 
 <script>
-(() => {
-  // Supabase proje bilgileri
-  const SUPABASE_URL = "https://rcuqmwgohpzcpwgmkbjj.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_H60Zlfe0MbXeQmxSfiAwgg_WpoMUkmY";
+/*
+  ÖNEMLİ:
+  Bu istemci tarafı şifre kontrolü güvenlik amacıyla kullanılamaz.
+  Gerçek şifreyi buraya koymayın. Güvenli giriş için sunucu tarafı
+  doğrulama kurulmalıdır.
+*/
+const loginScreen = document.getElementById("loginScreen");
+const appScreen = document.getElementById("appScreen");
+const loginForm = document.getElementById("loginForm");
+const passwordInput = document.getElementById("password");
+const loginError = document.getElementById("loginError");
 
-  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  const $ = id => document.getElementById(id);
+loginForm.addEventListener("submit", function (event) {
+  event.preventDefault();
+  loginError.textContent =
+    "Güvenli giriş henüz kurulmadı. Sunucu tarafı doğrulaması gerekiyor.";
+  passwordInput.value = "";
+});
 
-  let roomId = null;
-  let seat = null;
-  let room = null;
-  let busy = false;
-  let selected = null;
-  let legalTargets = [];
-  let lastMessageId = 0;
-  let poller = null;
-
-  const blankBoard = () => {
-    const b = Array.from({length:8}, () => Array(8).fill(null));
-    for (let r=1;r<=2;r++)
-      for (let c=0;c<8;c++) b[r][c] = {side:"B",king:false};
-    for (let r=5;r<=6;r++)
-      for (let c=0;c<8;c++) b[r][c] = {side:"W",king:false};
-    return b;
-  };
-
-  function say(text) { $("status").textContent = text; }
-  function name() { return $("playerName").value.trim().slice(0,24); }
-  function myTurn() { return room && room.current_turn === seat && room.status === "playing"; }
-  function inside(r,c) { return r>=0 && r<8 && c>=0 && c<8; }
-  function same(a,b) { return a.r===b.r && a.c===b.c; }
-
-  function movesFor(board,r,c) {
-    const p = board[r][c];
-    if (!p) return [];
-    const dirs = p.king
-      ? [[1,0],[-1,0],[0,1],[0,-1]]
-      : [[p.side==="W"?-1:1,0],[0,1],[0,-1]];
-    const moves = [];
-
-    for (const [dr,dc] of dirs) {
-      const nr=r+dr, nc=c+dc;
-      if (inside(nr,nc) && !board[nr][nc]) {
-        if (p.king) {
-          let rr=nr, cc=nc;
-          while (inside(rr,cc) && !board[rr][cc]) {
-            moves.push({r:rr,c:cc,capture:null});
-            rr+=dr; cc+=dc;
-          }
-        } else {
-          moves.push({r:nr,c:nc,capture:null});
-        }
-      }
-
-      const er=r+dr, ec=c+dc, tr=r+2*dr, tc=c+2*dc;
-      if (inside(er,ec) && inside(tr,tc) &&
-          board[er][ec] && board[er][ec].side!==p.side &&
-          !board[tr][tc]) {
-        moves.push({r:tr,c:tc,capture:{r:er,c:ec}});
-      }
-    }
-
-    return moves;
-  }
-
-  function renderBoard() {
-    const el = $("board");
-    el.innerHTML = "";
-    const b = room && room.board ? room.board : blankBoard();
-
-    for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
-      const cell = document.createElement("button");
-      cell.className = "cell " + ((r+c)%2 ? "dark":"light");
-      cell.setAttribute("aria-label", `${r+1}. sıra ${c+1}. sütun`);
-      if (selected && same(selected,{r,c})) cell.classList.add("selected");
-      if (legalTargets.some(m=>m.r===r&&m.c===c)) cell.classList.add("target");
-
-      const p = b[r][c];
-      if (p) {
-        const piece = document.createElement("span");
-        piece.className = "piece " + (p.side==="W"?"white":"black");
-        piece.textContent = p.king ? "♛" : "";
-        cell.appendChild(piece);
-      }
-      cell.addEventListener("click",()=>clickCell(r,c));
-      el.appendChild(cell);
-    }
-  }
-
-  async function clickCell(r,c) {
-    if (!room || !seat || !myTurn() || busy) return;
-    const b = room.board;
-    const p = b[r][c];
-
-    if (selected) {
-      const m = legalTargets.find(x=>x.r===r&&x.c===c);
-      if (m) {
-        busy = true;
-        try {
-          const next = b.map(row=>row.map(x=>x ? {...x}:null));
-          const piece = {...next[selected.r][selected.c]};
-          next[selected.r][selected.c] = null;
-          if (m.capture) next[m.capture.r][m.capture.c] = null;
-          if (piece.side==="W" && r===0) piece.king=true;
-          if (piece.side==="B" && r===7) piece.king=true;
-          next[r][c] = piece;
-
-          const whiteLeft = next.flat().filter(x=>x&&x.side==="W").length;
-          const blackLeft = next.flat().filter(x=>x&&x.side==="B").length;
-          const nextTurn = seat==="W" ? "B" : "W";
-          const status = (!whiteLeft || !blackLeft) ? "finished" : "playing";
-
-          const {error} = await db.from("game_rooms").update({
-            board:next, current_turn:nextTurn, status
-          }).eq("id",roomId);
-          if (error) throw error;
-          selected=null; legalTargets=[];
-          await refreshRoom();
-          if (status==="finished") say("Oyun bitti! Kazanan: "+(!whiteLeft?"Siyah":"Beyaz"));
-        } catch(e) {
-          say("Hamle kaydedilemedi: "+e.message);
-        } finally { busy=false; renderBoard(); }
-        return;
-      }
-    }
-
-    if (p && p.side===seat) {
-      selected={r,c};
-      legalTargets=movesFor(b,r,c);
-    } else {
-      selected=null; legalTargets=[];
-    }
-    renderBoard();
-  }
-
-  function makeCode() {
-    return Math.random().toString(36).slice(2,8).toUpperCase();
-  }
-
-  async function createRoom() {
-    if (!name()) { say("Önce oyuncu adını yaz."); $("playerName").focus(); return; }
-    clearInterval(poller);
-    roomId=makeCode(); seat="W"; lastMessageId=0;
-    const {data,error}=await db.from("game_rooms").insert({
-      id:roomId, white_player:name(), black_player:null,
-      board:blankBoard(), current_turn:"W", status:"waiting"
-    }).select().single();
-
-    if (error) { roomId=null; seat=null; say("Oda açılamadı: "+error.message); return; }
-    room=data;
-    showRoom();
-    say("Oda oluşturuldu! Arkadaşına oda kodunu gönder. Katılınca oyun başlayacak.");
-    startPolling();
-  }
-
-  async function joinRoom() {
-    if (!name()) { say("Önce oyuncu adını yaz."); $("playerName").focus(); return; }
-    const code=$("joinCode").value.trim().toUpperCase();
-    if (!code) { say("Arkadaşının oda kodunu yaz."); return; }
-
-    clearInterval(poller);
-    const {data,error}=await db.from("game_rooms").select("*").eq("id",code).maybeSingle();
-    if (error) { say("Oda aranırken hata oldu: "+error.message); return; }
-    if (!data) { say("Bu kodla oda bulunamadı. Kodu kontrol et."); return; }
-    if (data.black_player && data.black_player!==name()) {
-      say("Bu odada iki oyuncu var. Başka oda kodu dene."); return;
-    }
-    if (data.status==="finished") { say("Bu oyun bitmiş. Yeni oda oluşturun."); return; }
-
-    roomId=code;
-    seat=(data.white_player===name() && !data.black_player) ? "W" : "B";
-    if (seat==="W") {
-      say("Bu oda senin oluşturduğun oda gibi görünüyor.");
-    } else {
-      const {error:upError}=await db.from("game_rooms").update({
-        black_player:name(), status:"playing"
-      }).eq("id",code).is("black_player",null);
-      if (upError) { say("Odaya katılma hatası: "+upError.message); return; }
-    }
-    lastMessageId=0;
-    await refreshRoom();
-    showRoom();
-    say("Odaya bağlandın. Sıra kimdeyse o oynayabilir.");
-    startPolling();
-  }
-
-  function showRoom() {
-    $("roomInfo").textContent=roomId || "Henüz oda yok";
-    $("copyCode").classList.toggle("hidden",!roomId);
-    $("seatInfo").textContent=seat ? "Sen: "+(seat==="W"?"Beyaz taşlar":"Siyah taşlar") : "";
-    $("chatInput").disabled=!roomId;
-    $("sendMessage").disabled=!roomId;
-    renderBoard();
-  }
-
-  async function refreshRoom() {
-    if (!roomId) return;
-    const {data,error}=await db.from("game_rooms").select("*").eq("id",roomId).maybeSingle();
-    if (error) { say("Bağlantı hatası: "+error.message); return; }
-    if (!data) { say("Oda bulunamadı."); return; }
-    room=data;
-    if (room.status==="waiting") say("Baran Ağa'nın katılması bekleniyor. Oda kodu: "+roomId);
-    else if (room.status==="playing") say(myTurn()?"Sıra sende! Hamleni yap.":"Rakibin hamlesi bekleniyor...");
-    renderBoard();
-    await refreshMessages();
-  }
-
-  async function refreshMessages() {
-    if (!roomId) return;
-    const {data,error}=await db.from("game_messages").select("*")
-      .eq("room_id",roomId).order("id",{ascending:true}).limit(100);
-    if (error) return;
-    const box=$("chatMessages");
-    if (!data.length) {
-      box.innerHTML='<p class="small">İlk mesajı sen yaz!</p>';
-      return;
-    }
-    box.innerHTML="";
-    data.forEach(m=>{
-      const div=document.createElement("div");
-      div.className="msg";
-      const who=document.createElement("b");
-      who.textContent=m.player_name+": ";
-      const content=document.createElement("span");
-      content.textContent=m.message;
-      div.appendChild(who); div.appendChild(content); box.appendChild(div);
-    });
-    box.scrollTop=box.scrollHeight;
-    lastMessageId=data[data.length-1].id;
-  }
-
-  async function sendMessage() {
-    const message=$("chatInput").value.trim();
-    if (!roomId || !message) return;
-    const {error}=await db.from("game_messages").insert({
-      room_id:roomId, player_name:name()||"Oyuncu", message
-    });
-    if (error) { say("Mesaj gönderilemedi: "+error.message); return; }
-    $("chatInput").value="";
-    await refreshMessages();
-  }
-
-  function startPolling() {
-    clearInterval(poller);
-    poller=setInterval(refreshRoom,1500);
-  }
-
-  $("newGame").addEventListener("click",createRoom);
-  $("joinGame").addEventListener("click",joinRoom);
-  $("sendMessage").addEventListener("click",sendMessage);
-  $("chatInput").addEventListener("keydown",e=>{if(e.key==="Enter")sendMessage();});
-  $("joinCode").addEventListener("keydown",e=>{if(e.key==="Enter")joinRoom();});
-  $("copyCode").addEventListener("click",async()=>{
-    try { await navigator.clipboard.writeText(roomId); say("Oda kodu kopyalandı: "+roomId); }
-    catch(e) { say("Oda kodun: "+roomId+" — kodu elle seçip kopyalayabilirsin."); }
-  });
-
-  renderBoard();
-})();
+document.getElementById("logoutButton").addEventListener("click", function () {
+  appScreen.classList.add("hidden");
+  loginScreen.classList.remove("hidden");
+  passwordInput.value = "";
+});
 </script>
 </body>
 </html>
